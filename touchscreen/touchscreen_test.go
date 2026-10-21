@@ -1,6 +1,7 @@
 package touchscreen
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/akrck02/go-renderer/draw2d"
@@ -8,6 +9,7 @@ import (
 	"github.com/jonbul/ships3D-3ds/figures"
 	"github.com/jonbul/ships3D-3ds/game"
 	"github.com/jonbul/ships3D-3ds/profile"
+	"github.com/jonbul/ships3D-3ds/protocol"
 )
 
 func nothing() {}
@@ -157,5 +159,26 @@ func TestAModesTextIsWrappedToFitItsCard(t *testing.T) {
 	}
 	if lines := cardLines(eightWide{}, "Short", 100); len(lines) != 1 {
 		t.Fatalf("lines %q, want one", lines)
+	}
+}
+
+func TestTheLobbyPageSaysWhoWaitsAndWhenTheRoundStarts(test *testing.T) {
+	lobby := game.Lobby{Players: []protocol.Player{{Id: "me", Name: "Ann"}, {Id: "them", Name: "Ben"}}, MinPlayers: 4, MaxPlayers: 20}
+	labels := func(page Page) string {
+		text := ""
+		for _, row := range page.Rows {
+			text += row.Label + "|" + row.Value + "\n"
+		}
+		return text
+	}
+	waiting := labels(LobbyPage(lobby, "me", 0, nil))
+	for _, want := range []string{"2 / 20 players", "Waiting for at least 4 players…", "Ann|YOU", "Ben|"} {
+		if !strings.Contains(waiting, want) {
+			test.Errorf("the waiting lobby lacks %q:\n%s", want, waiting)
+		}
+	}
+	lobby.CountingDown, lobby.StartsAt = true, 12.2
+	if counting := labels(LobbyPage(lobby, "me", 0, nil)); !strings.Contains(counting, "Starting in 13 s") {
+		test.Errorf("the counting lobby says:\n%s", counting)
 	}
 }

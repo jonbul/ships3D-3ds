@@ -105,7 +105,10 @@ models (go-renderer's glTF loader, fetched from the server once and kept).
 - [x] T8 — Crashes · game/, protocol/ · R6 · tests: `TestRunningIntoAShipIsReportedAgainOnlyEveryQuarterSecond`, `TestPassingCloseToAShipIsNoCrash`, `TestADeadShipCannotBeRunInto` — as the browser: crash spheres of 0.7 ship radii, reported again every 0.25 s until the server agrees; the mothership waits for T10; not yet played against a bot
 - [x] T9 — The assault's protocol and lobby · protocol/, match/, game/ · R4 · tests on the lobby, round and result messages — also played: four clients on a local ships3D-api got a round with three attackers and a gunner in a turret
 - [x] T10 — The mothership, turrets, teams and the gunner · hull/, arena/, game/, engine/ · R5 · test: `TestTheMothershipIsBuiltFromItsDesign`; played with 4 bots — played as an attacker on the desktop and in Azahar with three bots on a local ships3D-api; the gunner's view is tested but not yet played (the teams are dealt at random); Azahar dropped to 53 fps for a moment with the mothership in sight (T14)
-- [ ] T11 — The assault's screens: lobby, countdown, result; the mothership's life on the HUD · engine/, hud/ · R4 R5 · screenshots beside the browser
+- [x] T11 — The assault's screens: lobby, countdown, result; the mothership's life on the HUD · engine/, hud/ · R4 R5 · screenshots beside the browser
+  Played on the desktop against three bots: the lobby lists who waits and counts down, the round
+  opens with our role, and the HUD shows the mothership's life and the time left (a gunner has no
+  life bar). The result screen is tested but not yet seen in play: a round lasts five minutes.
 - [ ] T12 — Textures, opacity and lights on parts · ship/ · R7 · tests per kind of part
 - [ ] T13 — `.glb` parts · ship/ · R7 · test: a design with a model part makes its mesh
 - [ ] T14 — 60 fps in an assault with 20 players on a New 3DS · R9 · STATS

@@ -26,6 +26,7 @@ type Round struct {
 	Team       string
 	Seat       *protocol.Seat // ours, as a gunner
 	Mothership protocol.Mothership
+	StartedAt  float64 // seconds, for the message that tells our role
 	EndsAt     float64 // seconds
 	Winner     string  // a team, once the round is over
 	ReturnAt   float64 // seconds, when the lobby comes back after the result
@@ -81,7 +82,7 @@ func (game *Game) startRound(message protocol.Incoming, now float64) {
 	game.welcome(message, now)
 	game.Round = &Round{
 		Rules: message.Rules, Team: game.Player.Team, Seat: game.Player.Seat,
-		Mothership: message.Mothership, EndsAt: now + message.EndsInMs/millisecondsPerSecond,
+		Mothership: message.Mothership, StartedAt: now, EndsAt: now + message.EndsInMs/millisecondsPerSecond,
 		shape: hull.New(message.Mothership.Ship.Layers, message.Mothership.Scale),
 	}
 	if seat := game.Round.Seat; seat != nil {

@@ -64,7 +64,7 @@ func TestARoundStartPlacesUsInOurTeam(t *testing.T) {
 	if game.Lobby != nil || round == nil || !game.Welcomed || !game.Alive {
 		t.Fatalf("lobby %v, round %v, welcomed %v, alive %v", game.Lobby, round, game.Welcomed, game.Alive)
 	}
-	if round.Team != protocol.TeamAttackers || round.Seat != nil || round.EndsAt != 200 || round.Mothership.Life != 200 {
+	if round.Team != protocol.TeamAttackers || round.Seat != nil || round.StartedAt != 20 || round.EndsAt != 200 || round.Mothership.Life != 200 {
 		t.Fatalf("round %+v", round)
 	}
 	if game.Remotes["them"] == nil || game.Remotes["them"].Player.Seat == nil {

@@ -1,15 +1,17 @@
 // Package hud draws the game's readings over the 3D view, as the 3DS shows them on its top
-// screen: life as a capsule of charges with a heart at the top left, and the copilot's box at the
-// bottom when it has something to say. Any client paints them in a draw2d list over its view.
+// screen: life as a capsule of charges with a heart at the top left, an assault round's mothership
+// and time at the top right, and the copilot's box at the bottom when it has something to say.
+// Any client paints them in a draw2d list over its view.
 package hud
 
 import (
-	"github.com/jonbul/ships3D-3ds/pixelart"
 	"math"
+	"strconv"
 
 	"github.com/akrck02/go-renderer/draw2d"
 
 	"github.com/jonbul/ships3D-3ds/game"
+	"github.com/jonbul/ships3D-3ds/pixelart"
 )
 
 // The top screen's readings over the game: life as a bar of charges at the top left, and the
@@ -96,11 +98,32 @@ var hudColours = struct {
 	ink: draw2d.Hex("#eaf4ff"), shadow: draw2d.Hex("#02060fa0"), shine: draw2d.Hex("#ffffff70"),
 }
 
+// The assault's readings at the top right: the mothership's life as a bar under its name, and
+// the round's time left under it. Sizes are in pixels.
+const (
+	roundRight      = 10
+	roundTop        = 10
+	roundBarWidth   = 110
+	roundBarHeight  = 8
+	roundLabelRoom  = 12 // the name's line, above the bar
+	roundTimeRoom   = 18 // the time's line, below the bar
+	secondsAMinute  = 60
+	roundLabelInset = 4
+)
+
+// roundColours are the mothership's bar: its life, warm as a target's.
+var roundColours = [2]draw2d.Color{draw2d.Hex("#ffd36f"), draw2d.Hex("#e0602d")}
+
 // Paint lays the readings out in drawing for this frame, which it empties first, over a view of
 // width × height pixels.
 func Paint(drawing *draw2d.List, state *game.Game, now float64, width, height float32) {
 	drawing.Reset()
-	paintLife(drawing, state.Player.Life, state.Settings.MaxLife, now)
+	if state.Round == nil || state.Round.Seat == nil { // a gunner's turret is not hit, only the hull
+		paintLife(drawing, state.Player.Life, state.Settings.MaxLife, now)
+	}
+	if state.Round != nil {
+		paintRound(drawing, state.Round, now, width)
+	}
 	switch {
 	case state.Returning:
 		paintCopilot(drawing, copilotTurningBack, now, width, height)
@@ -173,4 +196,33 @@ func paintCopilot(drawing *draw2d.List, words string, now float64, width, height
 	if pixelart.Shown(now, copilotBlinks, copilotWordsShare) {
 		drawing.Text(words, box.X+copilotWordsLeft, box.Y+copilotHeight/2+5, pixelart.TextSize, draw2d.Regular, hudColours.ink)
 	}
+}
+
+// paintRound draws the mothership's life and the round's time left, at the top right.
+func paintRound(drawing *draw2d.List, round *game.Round, now float64, width float32) {
+	frame := draw2d.Rect{X: width - roundRight - roundBarWidth - 8, Y: roundTop, Width: roundBarWidth + 8, Height: roundLabelRoom + roundBarHeight + roundTimeRoom + 6}
+	shadow := frame
+	shadow.X, shadow.Y = shadow.X+hudShadowDrop, shadow.Y+hudShadowDrop
+	pixelart.Stepped(drawing, shadow, 2, hudColours.shadow)
+	pixelart.Stepped(drawing, frame, 2, hudColours.edge)
+	pixelart.Stepped(drawing, pixelart.Inset(frame, 2), 2, hudColours.box)
+	left := frame.X + roundLabelInset
+	drawing.Text("MOTHERSHIP", left, frame.Y+roundLabelRoom, pixelart.LabelSize, draw2d.Mono, hudColours.ink)
+	bar := draw2d.Rect{X: left, Y: frame.Y + roundLabelRoom + 3, Width: roundBarWidth, Height: roundBarHeight}
+	drawing.Rectangle(bar, 0, hudColours.spent, draw2d.Color{}, 0)
+	share := float32(0)
+	if round.Mothership.MaxLife > 0 {
+		share = float32(min(max(round.Mothership.Life/round.Mothership.MaxLife, 0), 1))
+	}
+	lit := bar
+	lit.Width *= share
+	drawing.Rectangle(lit, 0, mixColours(roundColours[1], roundColours[0], share), draw2d.Color{}, 0)
+	drawing.Rectangle(draw2d.Rect{X: lit.X, Y: lit.Y, Width: lit.Width, Height: 2}, 0, hudColours.shine, draw2d.Color{}, 0)
+	drawing.Text(clock(round.EndsAt-now)+" LEFT", left, bar.Y+roundBarHeight+roundTimeRoom-4, pixelart.TextSize, draw2d.Regular, hudColours.ink)
+}
+
+// clock writes seconds as minutes and seconds, 85 as 1:25; never below 0:00.
+func clock(seconds float64) string {
+	whole := max(int(math.Ceil(seconds)), 0)
+	return strconv.Itoa(whole/secondsAMinute) + ":" + strconv.Itoa(whole%secondsAMinute/10) + strconv.Itoa(whole%10)
 }

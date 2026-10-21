@@ -79,6 +79,9 @@ func (pilot *Pilot) pages() []touchscreen.Page {
 // joiningPage is the window shown until the server welcomes us: how the connection goes, and the
 // way back.
 func (pilot *Pilot) joiningPage() touchscreen.Page {
+	if pilot.played != nil && pilot.played.Game.Lobby != nil {
+		return touchscreen.LobbyPage(*pilot.played.Game.Lobby, pilot.played.Game.Id, pilot.now, func() { pilot.leaving = true })
+	}
 	rows := touchscreen.StatusRows(pilot.connectionStatus(), pilot.problem())
 	rows = append(rows, touchscreen.Row{}, touchscreen.Row{Label: "Back to the ships", Activate: func() { pilot.leaving = true }})
 	return touchscreen.Page{Title: touchscreen.JoiningTitle, Small: true, Rows: rows}
@@ -137,14 +140,24 @@ func (pilot *Pilot) paintReadings(drawing *draw2d.List, width, height float32) {
 	})
 }
 
-// paintFlight is the top screen's readings: the life bar and the copilot, or who destroyed us.
+// paintFlight is the top screen's readings: the life bar and the copilot, or who destroyed us;
+// over an assault round, also our role at its start and the result at its end.
 func (pilot *Pilot) paintFlight(drawing *draw2d.List, width, height float32) {
 	state := pilot.played.Game
-	if !state.Alive {
+	over := state.Round != nil && state.Round.Winner != ""
+	switch {
+	case over:
+	case !state.Alive:
 		topHeading(drawing, width, "Destroyed", pilot.deathCaption())
+	default:
+		hud.Paint(drawing, state, pilot.now, width, height)
+	}
+	if state.Round == nil {
 		return
 	}
-	hud.Paint(drawing, state, pilot.now, width, height)
+	if heading, caption, shown := roundHeading(state.Round, pilot.now); shown && (over || state.Alive) {
+		topHeading(drawing, width, heading, caption)
+	}
 }
 
 // The desktop's radar: the touch screen's picture at this share of its size, in the bottom right

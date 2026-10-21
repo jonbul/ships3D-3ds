@@ -102,6 +102,7 @@ const (
 	ConnectingTitle = "CONNECTING"
 	RestartTitle    = "RESTART?"
 	JoiningTitle    = "JOINING"
+	LobbyTitle      = "LOBBY"
 )
 
 // bitmap draws a picture drawn by hand in text with its top left at x, y: '#' in main, '+' in light.
