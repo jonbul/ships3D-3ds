@@ -140,3 +140,22 @@ func TestATouchOnAModesCardChoosesIt(test *testing.T) {
 		test.Errorf("a touch in the screen's corner chose mode %d, want none", got)
 	}
 }
+
+// eightWide measures every character 8 pixels wide.
+type eightWide struct{}
+
+func (eightWide) MeasureText(text string, size float32, weight draw2d.Weight, scale float32) draw2d.TextMetrics {
+	return draw2d.TextMetrics{Width: 8 * float32(len(text))}
+}
+
+func (eightWide) HasIcon(string) bool { return false }
+
+func TestAModesTextIsWrappedToFitItsCard(t *testing.T) {
+	lines := cardLines(eightWide{}, "Teams around a mothership", 100)
+	if len(lines) != 2 || lines[0] != "Teams around" || lines[1] != "a mothership" {
+		t.Fatalf("lines %q, want two that fit 100 pixels", lines)
+	}
+	if lines := cardLines(eightWide{}, "Short", 100); len(lines) != 1 {
+		t.Fatalf("lines %q, want one", lines)
+	}
+}

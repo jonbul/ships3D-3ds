@@ -6,7 +6,7 @@ import (
 	"github.com/akrck02/go-renderer/models"
 
 	"github.com/jonbul/ships3D-3ds/arena"
-	"github.com/jonbul/ships3D-3ds/pixelart"
+	"github.com/jonbul/ships3D-3ds/match"
 	"github.com/jonbul/ships3D-3ds/touchscreen"
 )
 
@@ -19,7 +19,10 @@ const (
 )
 
 // chosen is what the player has picked, carried from one scene to the next.
-var chosen = struct{ shipID string }{shipID: defaultShip}
+var chosen = struct {
+	shipID string
+	mode   match.Mode
+}{shipID: defaultShip, mode: match.FreeForAll}
 
 // confirmed tells whether the player said yes this frame: Enter, or Space (the 3DS's A).
 func confirmed(keys *engine.Input) bool {
@@ -90,11 +93,14 @@ func (title *Title) paint(drawing *draw2d.List, width, height float32) {
 	}
 }
 
-// The modes a player chooses between; the assault isn't in this client yet.
-var modes = []touchscreen.Mode{
-	{Name: "FREE FOR ALL", Text: "Every pilot for themselves", Icon: touchscreen.FreeForAllIcon, Open: true},
-	{Name: "ASSAULT", Text: "Coming soon", Icon: touchscreen.AssaultIcon},
-}
+// The modes a player chooses between, and the server's way to play each, in the same order.
+var (
+	modes = []touchscreen.Mode{
+		{Name: "FREE FOR ALL", Text: "Every pilot for themselves", Icon: touchscreen.FreeForAllIcon, Open: true},
+		{Name: "ASSAULT", Text: "Teams around a mothership", Icon: touchscreen.AssaultIcon, Open: true},
+	}
+	playedModes = []match.Mode{match.FreeForAll, match.Assault}
+)
 
 // Modes is choosing the game's mode: a window with a big icon for each, the star on the one
 // chosen; the arrows (the cross) choose, Enter (A) goes on, Escape (B) back to the title.
@@ -127,7 +133,7 @@ func (choice *Modes) Update(context *engine.Context) {
 	choice.world.HideTitle()
 	look(context, view)
 	keys := context.Input
-	read := touchInput(keys)
+	read := panelInput(keys)
 	touched := choice.touched(read)
 	if read.Pressed&(touchscreen.ButtonLeft|touchscreen.ButtonRight) != 0 {
 		choice.chosen = (choice.chosen + 1) % len(modes)
@@ -135,6 +141,7 @@ func (choice *Modes) Update(context *engine.Context) {
 	}
 	switch {
 	case (confirmed(keys) || touched) && modes[choice.chosen].Open:
+		chosen.mode = playedModes[choice.chosen]
 		playSound(func(sound *soundSet) { sound.Play(sound.Choose, 1) })
 		context.ChangeScene(shipScene)
 	case cancelled(keys):
@@ -156,37 +163,13 @@ func (choice *Modes) touched(read touchscreen.Input) bool {
 	return true
 }
 
-// The mode window's measures, in pixels.
-const (
-	modeWindowWidth  = 300
-	modeWindowHeight = 150
-	modeCardWidth    = 136
-	modeIconPixel    = 3
-)
-
 func (choice *Modes) paint(drawing *draw2d.List, width, height float32) {
 	if hasTouchScreen {
 		mode := modes[choice.chosen]
 		topHeading(drawing, width, "Game mode", mode.Name)
 		return
 	}
-	area := draw2d.Rect{X: (width - modeWindowWidth) / 2, Y: (height - modeWindowHeight) / 2, Width: modeWindowWidth, Height: modeWindowHeight}
-	window(drawing, area, "GAME MODE")
-	for index, mode := range modes {
-		card := draw2d.Rect{X: area.X + 10 + float32(index)*(modeCardWidth+8), Y: area.Y + 30, Width: modeCardWidth, Height: modeWindowHeight - 40}
-		ink, iconColour := colours.soft, colours.dim
-		if index == choice.chosen {
-			pixelart.Stepped(drawing, card, 1, colours.chosen)
-			cursor(drawing, card.X+4, card.Y+4, choice.now)
-			ink, iconColour = colours.ink, colours.accent
-		}
-		iconWidth := float32(len(mode.Icon[0])) * modeIconPixel
-		pixelart.PaintedBitmap(drawing, mode.Icon, card.X+(card.Width-iconWidth)/2, card.Y+10, modeIconPixel,
-			map[byte]draw2d.Color{'#': iconColour, '+': colours.ink})
-		label := card.X + (card.Width-textWidth(mode.Name, pixelart.LabelSize, draw2d.Mono))/2
-		drawing.Text(mode.Name, label, card.Y+72, pixelart.LabelSize, draw2d.Mono, ink)
-		text := card.X + (card.Width-textWidth(mode.Text, pixelart.TextSize, draw2d.Regular))/2
-		drawing.Text(mode.Text, text, card.Y+92, pixelart.TextSize, draw2d.Regular, colours.soft)
-	}
-	hints(drawing, "< > CHOOSE   ENTER/A OK   ESC/B BACK", width, height)
+	paintPanel(drawing, width, height, func(drawing *draw2d.List) {
+		touchscreen.ModeChoice(drawing, textMeasurer(), modes, choice.chosen, choice.now)
+	})
 }

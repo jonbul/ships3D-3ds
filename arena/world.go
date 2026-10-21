@@ -47,6 +47,8 @@ type World struct {
 	camera                 chase.Camera
 	wasAlive               bool
 	reticle                *scene.Node
+	mothership             *scene.Node // the assault's, in a round
+	turret                 *scene.Mesh // a gunner's, on the mothership
 	remotes                map[string]*scene.Node
 	bullets                []*scene.Node
 	view                   chase.View // what the camera saw last, to leave out the ships it can't
@@ -107,6 +109,9 @@ func NewWorldIn(space *scene.Scene) *World {
 	// Ships and the aim cross turn all the time: Moving has go-renderer light them on the GPU
 	// rather than bake their light again at every turn.
 	world.own = &scene.Node{Name: "own", Hidden: true, Moving: true}
+	world.mothership = &scene.Node{Name: "mothership", Hidden: true}
+	world.turret = newTurret()
+	space.Nodes = append(space.Nodes, world.mothership)
 	world.reticle = &scene.Node{Name: "reticle", Mesh: reticle(), Hidden: true, Moving: true}
 	space.Nodes = append(space.Nodes, world.own, world.reticle)
 	world.ownBullet = Box("own bullet", bulletSize, bulletSize, bulletSize, ownBulletColour)
@@ -124,6 +129,7 @@ func (world *World) Show(state *game.Game, events []game.Event, view *models.Cam
 	world.title.Hidden = true
 	world.now = now
 	view.FieldOfView = chase.FieldOfView // the title sees narrower, through the same view
+	world.showMothership(state)
 	if !state.Welcomed {
 		view.Position, view.Target, view.Up = graphics.Vec4{0, 20, -60, 1}, graphics.Vec4{0, 0, 0, 1}, graphics.Vec4{0, 1, 0, 0}
 		return
@@ -133,7 +139,7 @@ func (world *World) Show(state *game.Game, events []game.Event, view *models.Cam
 		world.ownShip = state.Player.Ship.Id
 		world.own.Mesh = world.ShipMesh(state.Player.Ship.Id, state.Player.Ship.Layers, false)
 	}
-	world.own.Hidden = !state.Alive
+	world.own.Hidden = !state.Alive || state.Round != nil && state.Round.Seat != nil // a gunner looks out of the turret
 	world.own.Transform = TransformOf(state.Own.Position, state.Own.Rotation, scale)
 	if state.Alive && !world.wasAlive {
 		world.camera.Reset() // back from a respawn, far from the wreck
@@ -236,6 +242,11 @@ func (world *World) showRemotes(state *game.Game) {
 		}
 		distance := player.Shown.Position.Subtract(state.Own.Position).Length()
 		node.Hidden = false
+		if player.Player.Seat != nil {
+			node.Mesh = world.turret
+			node.Transform = TransformOf(player.Shown.Position, player.Shown.Rotation, turretShare*state.Settings.ShipRadius)
+			continue
+		}
 		node.Mesh = world.ShipMesh(player.Player.Ship.Id, player.Player.Ship.Layers, distance > coarseDistance)
 		node.Transform = TransformOf(player.Shown.Position, player.Shown.Rotation, player.Player.Scale)
 	}
@@ -284,6 +295,10 @@ func (world *World) showBullets(state *game.Game) {
 }
 
 func (world *World) placeCamera(state *game.Game, view *models.Camera, seconds float64) {
+	if state.Round != nil && state.Round.Seat != nil {
+		world.look(gunnerView(state), view)
+		return
+	}
 	chased := world.camera.Follow(state.Own, state.Settings.ShipRadius, seconds)
 	// Near the edge the camera draws back, as if something were wrong.
 	chased.Eye = chased.Target.Add(chased.Eye.Subtract(chased.Target).Times(1 + cameraPullBack*state.EdgeNearness()))
@@ -298,10 +313,15 @@ func (world *World) placeCamera(state *game.Game, view *models.Camera, seconds f
 		shake := state.Own.Rotation.Apply(flight.Vector{across, upAndDown, 0})
 		chased.Eye, chased.Target = chased.Eye.Add(shake), chased.Target.Add(shake)
 	}
-	world.view = chased
-	view.Position = vectorOf(chased.Eye, 1)
-	view.Target = vectorOf(chased.Target, 1)
-	view.Up = vectorOf(chased.Up, 0)
+	world.look(chased, view)
+}
+
+// look sees the world from seen.
+func (world *World) look(seen chase.View, view *models.Camera) {
+	world.view = seen
+	view.Position = vectorOf(seen.Eye, 1)
+	view.Target = vectorOf(seen.Target, 1)
+	view.Up = vectorOf(seen.Up, 0)
 }
 
 // reticleDistance is how far ahead of the ship the aim mark floats, in world units: where a

@@ -1,6 +1,8 @@
 package touchscreen
 
 import (
+	"strings"
+
 	"github.com/akrck02/go-renderer/draw2d"
 
 	"github.com/jonbul/ships3D-3ds/pixelart"
@@ -66,6 +68,8 @@ const (
 	modeIconTop      = 10
 	modeNameTop      = 72
 	modeTextTop      = 92
+	modeTextLine     = 12              // between a card's lines of text
+	modeTextMargin   = 4               // on either side of a card's text
 	modeHintsBelow   = 2 * hintsHeight // the hints, under the window
 )
 
@@ -117,8 +121,30 @@ func paintModeCard(drawing *draw2d.List, measurer draw2d.Measurer, card draw2d.R
 	scaledBitmap(drawing, mode.Icon, card.X+(card.Width-iconWidth)/2, card.Y+modeIconTop, modeIconPixel, iconColour, Colours.Ink)
 	name := card.X + (card.Width-measurer.MeasureText(mode.Name, labelPixels, draw2d.Mono, 1).Width)/2
 	drawing.Text(mode.Name, name, card.Y+modeNameTop, labelPixels, draw2d.Mono, ink)
-	text := card.X + (card.Width-measurer.MeasureText(mode.Text, pixelTextSize, draw2d.Regular, 1).Width)/2
-	drawing.Text(mode.Text, text, card.Y+modeTextTop, pixelTextSize, draw2d.Regular, Colours.Soft)
+	lines := cardLines(measurer, mode.Text, card.Width-2*modeTextMargin)
+	top := card.Y + modeTextTop - float32(len(lines)-1)*modeTextLine/2
+	for index, line := range lines {
+		x := card.X + (card.Width-measurer.MeasureText(line, pixelTextSize, draw2d.Regular, 1).Width)/2
+		drawing.Text(line, x, top+float32(index)*modeTextLine, pixelTextSize, draw2d.Regular, Colours.Soft)
+	}
+}
+
+// cardLines breaks a card's text into lines no wider than width, between words.
+func cardLines(measurer draw2d.Measurer, text string, width float32) []string {
+	var lines []string
+	line := ""
+	for _, word := range strings.Fields(text) {
+		longer := word
+		if line != "" {
+			longer = line + " " + word
+		}
+		if line != "" && measurer.MeasureText(longer, pixelTextSize, draw2d.Regular, 1).Width > width {
+			lines = append(lines, line)
+			longer = word
+		}
+		line = longer
+	}
+	return append(lines, line)
 }
 
 // ModeTouched is the index of the mode whose card a touch at x, y is on, of count, or -1.
