@@ -2,14 +2,12 @@
 
 A client for the [Ships 3D game server](https://github.com/jonbul/ships3D-api), for the New Nintendo 3DS (homebrew, `.3dsx`): it
 logs in, lists your ships and joins the same games as the browser, over the same websocket and
-HTTPS API. There are two programs, made from the same packages:
+HTTPS API. The game is a [go-engine](https://github.com/akrck02/go-engine) project, `engine/`:
+one game for the 3DS and the desktop (Linux, Windows, macOS), with scenes editable in go-engine's
+editor. It started as a program written by hand for the console; git history keeps it.
 
-- `cmd/ships3ds`, written by hand for the console;
-- `engine/`, the same game as a [go-engine](https://github.com/akrck02/go-engine) project, for
-  the 3DS and the desktop (Linux, Windows, macOS), with scenes editable in go-engine's editor.
-  The plan is in [docs/proposals/2-ships-on-go-engine.md](docs/proposals/2-ships-on-go-engine.md).
- **Status: experiment**, written with an AI assistant and pending review. The plan is in
-[docs/proposals/1-nintendo-3ds-client.md](docs/proposals/1-nintendo-3ds-client.md).
+**Status: experiment**, written with an AI assistant and pending review. The plans are in
+[docs/proposals/](docs/proposals/).
 
 | Title | Hangar | Game | At the edge |
 | --- | --- | --- | --- |
@@ -18,8 +16,7 @@ HTTPS API. There are two programs, made from the same packages:
 ## Building
 
 ```bash
-tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3ds.3dsx ./cmd/ships3ds
-tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3d-engine.3dsx ./engine
+tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3d.3dsx ./engine
 go build -tags release -o ships3d ./engine   # the desktop game; without -tags release, with go-engine's editor
 ```
 
@@ -33,14 +30,12 @@ modules: [go-3ds](https://github.com/akrck02/go-3ds) (the app loop, sockets, TLS
 the keyboard), [go-renderer](https://github.com/akrck02/go-renderer) (3D on the console's GPU),
 [go-ui](https://github.com/akrck02/go-ui) and [go-sound](https://github.com/akrck02/go-sound).
 
-- `runtime.heapMegabytes=64` leaves C its share of the console's memory: without it TinyGo takes
-  all it can, and the socket service doesn't find the megabyte it needs.
-- `-X main.server=192.168.1.20:3000` starts with another server than the real one
-  (`https://jonbul.ddns.net:3000`). A server written with `https://` is talked to over TLS.
-- `-X main.logServer=192.168.1.20:7777` sends the game's log to a computer as it happens
-  (`nc -lk 7777` there); it is also written to `sdmc:/3ds/ships3d/log.txt`.
+`runtime.heapMegabytes=64` leaves C its share of the console's memory: without it TinyGo takes
+all it can, and the socket service doesn't find the megabyte it needs. The game starts on the
+real server (`https://jonbul.ddns.net:3000`); the ACCOUNT page changes it, and a server written
+with `https://` is talked to over TLS.
 
-Copy `ships3ds.3dsx` to `/3ds/` on the SD card (ftpd works) and open it from the Homebrew
+Copy `ships3d.3dsx` to `/3ds/` on the SD card (ftpd works) and open it from the Homebrew
 Launcher. Sound needs the DSP's firmware, `sdmc:/3ds/dspfirm.cdc` (the DSP1 homebrew dumps it).
 
 ## Playing
@@ -74,7 +69,6 @@ Near the world's edge the force field shows, and the copilot turns you back if y
 | `transport`, `match` | Connections on every platform, and a match on the server frame by frame |
 | `arena`, `hud`, `pixelart` | The space the game is seen in (sky, ships, hangar, radar, effects), the HUD, the pixel-art look |
 | `touchscreen` | The touch screen: the menus and their pages, the radar's readings, the title's prompt, the hangar's arrows |
-| `cmd/ships3ds` | The console's hand-written program, to be replaced by the engine game |
 | `engine` | The go-engine game: its scenes and behaviours |
 
-All but the two programs are plain Go, tested on a computer with `go test ./...` (the CI runs them).
+All but `engine` are plain Go, tested on a computer with `go test ./...` (the CI runs them).

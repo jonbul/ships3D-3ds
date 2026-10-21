@@ -1,6 +1,6 @@
 # Builds the game for every platform when a version is tagged (v0.1.0, …), and puts the programs
 # on the tag's release: the desktop game (engine/) for Linux, Windows and macOS, and for the
-# Nintendo 3DS both the engine game and the hand-written program (cmd/ships3ds).
+# Nintendo 3DS.
 name: Release
 
 on:
@@ -70,13 +70,12 @@ jobs:
       run: |
         # The container's git doesn't trust a checkout another user owns, and Go stamps builds with it.
         git config --global --add safe.directory "$PWD"
-        tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3d-engine.3dsx ./engine
-        tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3d.3dsx ./cmd/ships3ds
+        tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3d.3dsx ./engine
 
     - uses: actions/upload-artifact@v4
       with:
         name: nintendo3ds
-        path: "*.3dsx"
+        path: ships3d.3dsx
 
   release:
     needs: [desktop, nintendo3ds]
@@ -89,4 +88,4 @@ jobs:
     - name: Put the programs on the release
       env:
         GH_TOKEN: ${{ github.token }}
-      run: gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --generate-notes ships3d-linux ships3d-windows.exe ships3d-macos *.3dsx
+      run: gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --generate-notes ships3d-linux ships3d-windows.exe ships3d-macos ships3d.3dsx

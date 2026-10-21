@@ -20,8 +20,8 @@ jobs:
 
     # The game, protocol and network packages are plain Go and are tested here, and the desktop
     # game (engine/) is built.
-    # The console's programs need TinyGo for the 3DS: cmd/ships3ds is left out by
-    # its build tag, engine/ is checked here as the desktop game.
+    # The 3DS build needs TinyGo for the 3DS (release.yml); engine/ is checked here as the
+    # desktop game.
     - name: Format
       run: test -z "$(gofmt -l .)"
 

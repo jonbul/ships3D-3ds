@@ -101,7 +101,7 @@ models (go-renderer's glTF loader, fetched from the server once and kept).
 - [x] T4 — Engine game, account as a menu page with the system keyboard · engine/account_nintendo3ds.go · R3 · logged in on Azahar — the pages seen and turned in Azahar; the system keyboard is still to try on a console
 - [x] T5 — Engine game, arena: the radar with kills, zoom and the menu (pause, settings, figures) on the touch screen · engine/pilot.go · R1 R2 · screenshots; played
 - [x] T6 — The desktop: the touch screen's pages in a window over the top screen's picture · engine/ · R8 · played on Linux
-- [ ] T7 — 60 fps on a New 3DS (the author plays it); then remove `cmd/ships3ds` and update the README and the release · R1 R9 · STATS
+- [x] T7 — 60 fps on a New 3DS (the author plays it); then remove `cmd/ships3ds` and update the README and the release · R1 R9 · STATS — both programs at 60 fps in a match on a New 3DS XL (one player), read from their logs through Rosalina
 - [ ] T8 — Crashes · game/, match/ · R6 · test: `TestACrashIsReportedOnce`
 - [ ] T9 — The assault's protocol and lobby · protocol/, match/, game/ · R4 · tests on the lobby, round and result messages
 - [ ] T10 — The mothership, turrets, teams and the gunner · arena/, game/, engine/ · R5 · test: `TestTheMothershipIsBuiltFromItsDesign`; played with 4 bots
