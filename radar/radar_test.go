@@ -32,9 +32,10 @@ func TestAFarShipIsPinnedToTheEdge(t *testing.T) {
 	}
 }
 
-func TestABlipOnTheRightIsOnMinusX(t *testing.T) {
-	x, y, z := Blip{Right: 0.5, Ahead: 0.2, Above: 1}.Scene()
-	if x != -0.5 || z != 0.2 || y != heightShare {
+func TestABlipIsInsideTheSphereWhereTheShipIs(t *testing.T) {
+	// As the browser's radar: the right on -X, above on +Y unsquashed, ahead on +Z.
+	x, y, z := Blip{Right: 0.5, Ahead: 0.2, Above: 0.7}.Scene()
+	if x != -0.5 || z != 0.2 || y != 0.7 {
 		t.Fatalf("got %v %v %v", x, y, z)
 	}
 }

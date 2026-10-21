@@ -9,13 +9,13 @@ import (
 )
 
 // radarScreen is the 3D radar on the second screen (the 3DS's bottom one), as in the 3DS program:
-// a scene under the interface, its camera above and behind the dish. The desktop has no second
+// a scene under the interface, its camera above and behind the sphere. The desktop has no second
 // screen: there the same scene is placed in a corner of the window, as the browser's radar is
 // (paintCornerRadar), or the flat map when it is chosen.
 type radarScreen struct {
 	scene   *engine.Scene
 	camera  *engine.Node
-	dish    *arena.Radar
+	sphere    *arena.Radar
 	scanner *radar.Scanner
 	blips   map[string]radar.Blip
 	shown   bool // on the second screen: not while the flat map is chosen
@@ -24,13 +24,13 @@ type radarScreen struct {
 // openRadar builds the radar's scene and puts it on the second screen.
 func openRadar() *radarScreen {
 	bottom, camera := secondScreenScene(arena.RadarView)
-	shown := &radarScreen{scene: bottom, camera: camera, dish: arena.NewRadarIn(bottom.World()), scanner: radar.NewScanner(), blips: map[string]radar.Blip{}, shown: true}
+	shown := &radarScreen{scene: bottom, camera: camera, sphere: arena.NewRadarIn(bottom.World()), scanner: radar.NewScanner(), blips: map[string]radar.Blip{}, shown: true}
 	engine.SetSecondScreen(bottom)
 	return shown
 }
 
-// show turns the sweep and lets it see the ships it passes over, as far as the zoom (an index in
-// radar.Ranges) reaches; the 3D dish shows unless the flat map is chosen.
+// show places the ships as far as the zoom (an index in radar.Ranges) reaches: on the 3D sphere, as
+// the browser shows them, and for the flat map, whose sweep sees them as it passes.
 func (shown *radarScreen) show(state *game.Game, now float64, zoom int, flat bool) {
 	if flat == shown.shown {
 		shown.shown = !flat
@@ -43,13 +43,13 @@ func (shown *radarScreen) show(state *game.Game, now float64, zoom int, flat boo
 		}
 	}
 	shown.scanner.Update(now, shown.blips)
-	shown.dish.Show(shown.scanner, now)
+	shown.sphere.Show(shown.blips)
 	if shown.camera != nil {
 		aim(shown.camera, arena.RadarView)
 	}
 }
 
-// putOnScreen puts the dish on the second screen when it shows, or takes it off.
+// putOnScreen puts the sphere on the second screen when it shows, or takes it off.
 func (shown *radarScreen) putOnScreen() {
 	if shown.shown {
 		engine.SetSecondScreen(shown.scene)
