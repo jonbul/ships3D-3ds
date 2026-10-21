@@ -102,7 +102,7 @@ models (go-renderer's glTF loader, fetched from the server once and kept).
 - [x] T5 — Engine game, arena: the radar with kills, zoom and the menu (pause, settings, figures) on the touch screen · engine/pilot.go · R1 R2 · screenshots; played
 - [x] T6 — The desktop: the touch screen's pages in a window over the top screen's picture · engine/ · R8 · played on Linux
 - [x] T7 — 60 fps on a New 3DS (the author plays it); then remove `cmd/ships3ds` and update the README and the release · R1 R9 · STATS — both programs at 60 fps in a match on a New 3DS XL (one player), read from their logs through Rosalina
-- [ ] T8 — Crashes · game/, match/ · R6 · test: `TestACrashIsReportedOnce`
+- [x] T8 — Crashes · game/, protocol/ · R6 · tests: `TestRunningIntoAShipIsReportedAgainOnlyEveryQuarterSecond`, `TestPassingCloseToAShipIsNoCrash`, `TestADeadShipCannotBeRunInto` — as the browser: crash spheres of 0.7 ship radii, reported again every 0.25 s until the server agrees; the mothership waits for T10; not yet played against a bot
 - [ ] T9 — The assault's protocol and lobby · protocol/, match/, game/ · R4 · tests on the lobby, round and result messages
 - [ ] T10 — The mothership, turrets, teams and the gunner · arena/, game/, engine/ · R5 · test: `TestTheMothershipIsBuiltFromItsDesign`; played with 4 bots
 - [ ] T11 — The assault's screens: lobby, countdown, result; the mothership's life on the HUD · engine/, hud/ · R4 R5 · screenshots beside the browser

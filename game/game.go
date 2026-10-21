@@ -75,13 +75,14 @@ type Game struct {
 	diedAt    float64
 	lastState float64
 	lastFire  float64
+	lastCrash float64 // seconds, when we last reported running into a ship
 	bulletIds int
 	outgoing  []string
 }
 
 // New is a game waiting for the server's welcome.
 func New() *Game {
-	return &Game{Remotes: map[string]*Remote{}, lastFire: -1e9, lastState: -1e9}
+	return &Game{Remotes: map[string]*Remote{}, lastFire: -1e9, lastState: -1e9, lastCrash: -1e9}
 }
 
 // CanRespawn tells whether we are dead long enough to fly again.
@@ -209,6 +210,7 @@ func (game *Game) Step(controls flight.Controls, firing, respawning bool, second
 		controls = game.steerHome(controls)
 		flight.Step(&game.Own, controls, game.Settings.Settings, seconds)
 		game.watchEdge(now)
+		game.reportCrash(now)
 		if firing && !game.Returning && now-game.lastFire >= float64(game.Settings.FireCooldownMs)/millisecondsPerSecond {
 			game.fire(now)
 		}
@@ -225,6 +227,42 @@ func (game *Game) Step(controls flight.Controls, firing, respawning bool, second
 	game.moveRemotes(seconds, now)
 	game.moveBullets(seconds, now)
 	return game.outgoing
+}
+
+// A ship's crash sphere, as a share of the ship's radius (its bounding sphere, which overstates
+// most designs, so only a solid overlap counts), and how often a crash is reported again while
+// the server hasn't agreed to it, as the browser does.
+const (
+	crashShare         = 0.7
+	crashReportSeconds = 0.25
+)
+
+// reportCrash tells the server when our ship runs into another one; the server decides, and its
+// deaths destroy both.
+func (game *Game) reportCrash(now float64) {
+	if now-game.lastCrash < crashReportSeconds {
+		return
+	}
+	target, found := game.shipRunInto()
+	if !found {
+		return
+	}
+	game.lastCrash = now
+	game.outgoing = append(game.outgoing, protocol.Crash(target))
+}
+
+// shipRunInto is the ship whose crash sphere overlaps ours, if any.
+func (game *Game) shipRunInto() (target string, found bool) {
+	touching := 2 * crashShare * game.Settings.ShipRadius
+	for id, remote := range game.Remotes {
+		if remote.Player.Dead {
+			continue
+		}
+		if remote.Shown.Position.Subtract(game.Own.Position).Length() <= touching {
+			return id, true
+		}
+	}
+	return "", false
 }
 
 // edgeShare is how close to the world's radius counts as touching its edge: the flight model

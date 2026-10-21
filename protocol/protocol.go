@@ -17,6 +17,7 @@ const (
 	TypeState   = "state"
 	TypeFire    = "fire"
 	TypeHit     = "hit"
+	TypeCrash   = "crash"
 	TypeRespawn = "respawn"
 
 	TypeWelcome      = "welcome"
@@ -182,6 +183,15 @@ func Hit(bulletId, target string) string {
 		BulletId string `json:"bulletId"`
 		Target   string `json:"target"`
 	}{TypeHit, bulletId, target})
+}
+
+// Crash reports that our ship ran into ship with; the server destroys both if its own record of
+// them agrees.
+func Crash(with string) string {
+	return write(struct {
+		Type string `json:"type"`
+		With string `json:"with"`
+	}{TypeCrash, with})
 }
 
 // Respawn asks to fly again after dying.

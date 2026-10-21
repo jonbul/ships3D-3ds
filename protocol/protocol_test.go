@@ -69,3 +69,9 @@ func TestASnapshotWithTypeLastIsStillRead(t *testing.T) {
 		t.Fatalf("got %+v, %v", states, err)
 	}
 }
+
+func TestACrashNamesTheShipRunInto(t *testing.T) {
+	if message := Crash("them"); message != `{"type":"crash","with":"them"}` {
+		t.Fatalf("crash is %s", message)
+	}
+}
