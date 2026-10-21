@@ -59,7 +59,7 @@ func (pilot *Pilot) Start(context *engine.Context) {
 	pilot.view = models.Camera{Far: arena.CameraFar, Near: arena.CameraNear, FieldOfView: chase.FieldOfView}
 	pilot.sound = gameSound
 	pilot.status = "Connecting to " + player.Server + "…"
-	played, err := match.Start(transport.Dial, player.Server, matchCookie(), orDefault(chosen.shipID, defaultShip), playerName(), pilot.hooks())
+	played, err := match.Start(transport.Dial, player.Server, match.FreeForAll, matchCookie(), orDefault(chosen.shipID, defaultShip), playerName(), pilot.hooks())
 	if err != nil {
 		pilot.status = err.Error()
 		slog.Warn("the match could not start", "error", err)

@@ -15,8 +15,15 @@ import (
 	"github.com/jonbul/ships3D-3ds/websocket"
 )
 
-// WebsocketPath is where the server takes game connections (ships3D-api's controllers/game.go).
-const WebsocketPath = "/ws"
+// Mode is a way to play, by the websocket path where the server takes its connections
+// (ships3D-api's controllers/game.go).
+type Mode string
+
+// The modes: every pilot for themselves, and the assault, teams around a mothership.
+const (
+	FreeForAll Mode = "/ws"
+	Assault    Mode = "/ws/assault"
+)
 
 // StateBacklogBytes is how much may wait to be sent before position updates are skipped: each
 // replaces the one before, so sending a stale one behind a stalled network only adds to the pile.
@@ -56,10 +63,10 @@ type Match struct {
 	Skipped int
 }
 
-// Start connects to server (address:port, or https://name:port) to join with the ship of shipID
-// under name, as the player whose session cookie is cookie (empty for a guest). Joining happens
-// once the websocket is open, in a later Exchange.
-func Start(dial Dial, server, cookie, shipID, name string, hooks Hooks) (*Match, error) {
+// Start connects to server (address:port, or https://name:port) to play mode, joining with the
+// ship of shipID under name, as the player whose session cookie is cookie (empty for a guest).
+// Joining happens once the websocket is open, in a later Exchange.
+func Start(dial Dial, server string, mode Mode, cookie, shipID, name string, hooks Hooks) (*Match, error) {
 	address, err := account.ParseAddress(server)
 	if err != nil {
 		return nil, err
@@ -72,7 +79,7 @@ func Start(dial Dial, server, cookie, shipID, name string, hooks Hooks) (*Match,
 	if cookie != "" {
 		header = map[string]string{"Cookie": cookie}
 	}
-	client, err := websocket.Connect(connection, address.HostPort(), WebsocketPath, header)
+	client, err := websocket.Connect(connection, address.HostPort(), string(mode), header)
 	if err != nil {
 		_ = connection.Close() // the handshake's error is the one to report
 		return nil, err

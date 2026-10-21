@@ -82,6 +82,11 @@ type Player struct {
 	Position flight.Vector   `json:"p"`
 	Rotation flight.Rotation `json:"q"`
 	Velocity flight.Vector   `json:"v"`
+	// The assault only: the player's team, an attacker's hits on the mothership, and a gunner's
+	// turret.
+	Team string `json:"team"`
+	Hits int    `json:"hits"`
+	Seat *Seat  `json:"seat"`
 }
 
 // PlayerState is a moved player, in a snapshot.
@@ -109,6 +114,17 @@ type Incoming struct {
 	BulletId  string          `json:"bulletId"`
 	Life      float64         `json:"life"`
 	Message   string          `json:"message"`
+	// The assault's lobby: how many may play, and when the round starts, if it is counting down.
+	MinPlayers int      `json:"minPlayers"`
+	MaxPlayers int      `json:"maxPlayers"`
+	StartsInMs *float64 `json:"startsInMs"`
+	// The assault's round: its rules, the mothership, and when it ends; then who won, and when
+	// the lobby comes back.
+	Rules      Rules      `json:"rules"`
+	Mothership Mothership `json:"mothership"`
+	EndsInMs   float64    `json:"endsInMs"`
+	Winner     string     `json:"winner"`
+	ReturnInMs float64    `json:"returnInMs"`
 }
 
 // snapshot is read apart: its players are states, not the full players of a welcome.

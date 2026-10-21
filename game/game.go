@@ -57,6 +57,9 @@ type Game struct {
 	Welcomed bool
 	Alive    bool
 	Problem  string // the server's last error message
+	// The assault only: the lobby while we wait in it, and the round while we play one.
+	Lobby *Lobby
+	Round *Round
 	// SnapshotAt is when the server's last snapshot arrived, in seconds; HitAt when we were last
 	// hit.
 	SnapshotAt, HitAt float64
@@ -97,6 +100,9 @@ func (game *Game) RespawnIn(now float64) float64 {
 
 // Handle applies one message from the server, at now seconds.
 func (game *Game) Handle(message protocol.Incoming, states []protocol.PlayerState, now float64) {
+	if game.handleAssault(message, now) {
+		return
+	}
 	switch message.Type {
 	case protocol.TypeWelcome:
 		game.welcome(message, now)
@@ -114,6 +120,9 @@ func (game *Game) Handle(message protocol.Incoming, states []protocol.PlayerStat
 	case protocol.TypeFire:
 		game.Others = append(game.Others, Bullet{Id: message.Id, Position: message.Position, Direction: message.Direction, expiresAt: now + game.bulletSeconds()})
 	case protocol.TypeDamage:
+		if message.Target == protocol.MothershipTarget {
+			game.damageMothership(message.Life)
+		}
 		game.setLife(message.Target, message.Life)
 		game.note(ShipHit, message.Target, now)
 		if message.Target == game.Id {
