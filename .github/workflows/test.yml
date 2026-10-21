@@ -1,0 +1,28 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    # The game, protocol and network packages are plain Go and are tested here.
+    # The console's program (cmd/ships3ds) needs TinyGo for the 3DS and is left
+    # out by its build tag.
+    - name: Format
+      run: test -z "$(gofmt -l .)"
+
+    - name: Vet
+      run: go vet ./...
+
+    - name: Test
+      run: go test -race ./...
