@@ -15,7 +15,7 @@ import (
 type radarScreen struct {
 	scene   *engine.Scene
 	camera  *engine.Node
-	sphere    *arena.Radar
+	sphere  *arena.Radar
 	scanner *radar.Scanner
 	blips   map[string]radar.Blip
 	shown   bool // on the second screen: not while the flat map is chosen
