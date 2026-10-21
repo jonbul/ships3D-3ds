@@ -64,7 +64,7 @@ Near the world's edge the force field shows, and the copilot turns you back if y
 | `websocket`, `web` | A small websocket client and HTTP over the console's sockets |
 | `protocol`, `account` | The server's messages, login and the list of ships |
 | `game`, `flight` | The game's state and the same flight model as the server's |
-| `ship`, `radar`, `chase`, `impact`, `tilt` | Ships' meshes, the radar, the camera, crash effects, the gyroscope |
+| `ship`, `hull`, `radar`, `chase`, `impact`, `tilt` | Ships' meshes, the mothership's shape, the radar, the camera, crash effects, the gyroscope |
 | `chiptune`, `sounds`, `figures`, `profile` | Sounds made in code and played, frame figures, what is remembered |
 | `transport`, `match` | Connections on every platform, and a match on the server frame by frame |
 | `arena`, `hud`, `pixelart` | The space the game is seen in (sky, ships, hangar, radar, effects), the HUD, the pixel-art look |

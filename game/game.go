@@ -216,11 +216,8 @@ func (game *Game) Step(controls flight.Controls, firing, respawning bool, second
 		return game.outgoing
 	}
 	if game.Alive {
-		controls = game.steerHome(controls)
-		flight.Step(&game.Own, controls, game.Settings.Settings, seconds)
-		game.watchEdge(now)
-		game.reportCrash(now)
-		if firing && !game.Returning && now-game.lastFire >= float64(game.Settings.FireCooldownMs)/millisecondsPerSecond {
+		game.move(controls, seconds, now)
+		if firing && !game.Returning && now-game.lastFire >= game.cooldownSeconds() {
 			game.fire(now)
 		}
 		if interval := 1 / float64(game.Settings.TickRate); game.Settings.TickRate > 0 && now-game.lastState >= interval-stateSlackSeconds {
@@ -262,9 +259,13 @@ func (game *Game) reportCrash(now float64) {
 
 // shipRunInto is the ship whose crash sphere overlaps ours, if any.
 func (game *Game) shipRunInto() (target string, found bool) {
-	touching := 2 * crashShare * game.Settings.ShipRadius
+	radius := crashShare * game.Settings.ShipRadius
+	if game.Round != nil && game.Round.shape.SphereHits(game.Own.Position, radius) {
+		return protocol.MothershipTarget, true
+	}
+	touching := 2 * radius
 	for id, remote := range game.Remotes {
-		if remote.Player.Dead {
+		if remote.Player.Dead || remote.Player.Seat != nil { // a gunner sits in the hull: that is the hull
 			continue
 		}
 		if remote.Shown.Position.Subtract(game.Own.Position).Length() <= touching {
@@ -272,6 +273,18 @@ func (game *Game) shipRunInto() (target string, found bool) {
 		}
 	}
 	return "", false
+}
+
+// move flies our ship by seconds with the player's controls, or, for a gunner, turns the turret.
+func (game *Game) move(controls flight.Controls, seconds, now float64) {
+	if game.gunning() {
+		game.aimTurret(controls, seconds)
+		return
+	}
+	controls = game.steerHome(controls)
+	flight.Step(&game.Own, controls, game.Settings.Settings, seconds)
+	game.watchEdge(now)
+	game.reportCrash(now)
 }
 
 // edgeShare is how close to the world's radius counts as touching its edge: the flight model
@@ -405,8 +418,11 @@ func (game *Game) moveBullets(seconds, now float64) {
 
 // shipHit finds the ship, as we draw it, that something moving from from to to passed through.
 func (game *Game) shipHit(from, to flight.Vector) (target string, hit bool) {
+	if game.attacking() {
+		return protocol.MothershipTarget, game.Round.shape.SegmentHits(from, to)
+	}
 	for id, remote := range game.Remotes {
-		if !remote.Player.Dead && flight.SegmentHitsSphere(from, to, remote.Shown.Position, game.Settings.ShipRadius) {
+		if !remote.Player.Dead && game.canHit(remote) && flight.SegmentHitsSphere(from, to, remote.Shown.Position, game.Settings.ShipRadius) {
 			return id, true
 		}
 	}

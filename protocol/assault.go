@@ -34,8 +34,8 @@ type Rules struct {
 	ResultsMs          int     `json:"resultsMs"`
 }
 
-// Seat is a gunner's turret on the mothership, in the design's units: Up is 1 on its top and -1
-// under it.
+// Seat is a gunner's turret on the mothership, in world units (the mothership sits at the middle
+// of the world, unturned): Up is 1 on its top and -1 under it.
 type Seat struct {
 	Position flight.Vector `json:"p"`
 	Up       float64       `json:"up"`
