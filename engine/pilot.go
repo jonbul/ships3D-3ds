@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/akrck02/go-engine/engine"
+	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/models"
 
 	"github.com/jonbul/ships3D-3ds/arena"
@@ -24,19 +25,20 @@ import (
 // 3DS the touch screen shows the radar and, with START, the menu, as the hand-written program
 // does; on the desktop the radar is in a corner and the menu's pages in the middle (panel.go).
 type Pilot struct {
-	world   *arena.World
-	radar   *radarScreen
-	sound   *soundSet
-	played  *match.Match
-	view    models.Camera
-	status  string
-	now     float64 // seconds, this frame
-	menu    touchMenu
-	joining touchscreen.Menu // the window while the server hasn't welcomed us yet
-	zoom    int              // the radar's reach, an index in radar.Ranges
-	figures figures.Counter
-	logged  float64 // seconds, when the figures were last written to the log
-	leaving bool    // a choice of the menu asked to go back to the ships
+	world      *arena.World
+	radar      *radarScreen
+	sound      *soundSet
+	played     *match.Match
+	view       models.Camera
+	status     string
+	now        float64 // seconds, this frame
+	menu       touchMenu
+	joining    touchscreen.Menu // the window while the server hasn't welcomed us yet
+	zoom       int              // the radar's reach, an index in radar.Ranges
+	figures    figures.Counter
+	logged     float64     // seconds, when the figures were last written to the log
+	leaving    bool        // a choice of the menu asked to go back to the ships
+	cornerArea draw2d.Rect // where the desktop shows the 3D radar, in the window's pixels
 }
 
 // The real server, and what a guest flies when the scene names nothing.

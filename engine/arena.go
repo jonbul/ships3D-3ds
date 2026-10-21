@@ -167,17 +167,35 @@ const (
 	cornerRadarMargin = 6
 )
 
-// paintCornerRadar is the desktop's radar: the flat map as the 3DS's touch screen shows it, smaller,
-// on the touch screen's ground.
+// paintCornerRadar is the desktop's radar, as the browser has it in a corner: the 3DS's touch
+// screen smaller, the 3D dish (the second screen's scene, placed there) or the flat map under its
+// readings.
 func (pilot *Pilot) paintCornerRadar(drawing *draw2d.List, width, height float32) {
-	start := len(drawing.Commands)
-	drawing.Rectangle(touchscreen.FullScreen, 0, touchscreen.Colours.Screen, draw2d.Color{}, 0)
-	shown := touchscreen.Radar{State: pilot.played.Game, Scanner: pilot.radar.scanner, Range: pilot.zoom, Flat: true, MenuKey: "TAB"}
-	touchscreen.PaintRadar(drawing, touchscreen.FullScreen, shown, pilot.now)
-	pixelart.Scale(drawing, start, cornerRadarShare)
+	flat := player.Settings.FlatRadar
 	x := width - touchscreen.Width*cornerRadarShare - cornerRadarMargin
 	y := height - touchscreen.Height*cornerRadarShare - cornerRadarMargin
+	pilot.placeCornerDish(x, y, height, flat)
+	start := len(drawing.Commands)
+	if flat {
+		drawing.Rectangle(touchscreen.FullScreen, 0, touchscreen.Colours.Screen, draw2d.Color{}, 0)
+	}
+	shown := touchscreen.Radar{State: pilot.played.Game, Scanner: pilot.radar.scanner, Range: pilot.zoom, Flat: flat, MenuKey: "TAB"}
+	touchscreen.PaintRadar(drawing, touchscreen.FullScreen, shown, pilot.now)
+	pixelart.Scale(drawing, start, cornerRadarShare)
 	pixelart.Move(drawing, start, x, y)
+}
+
+// placeCornerDish puts the 3D dish in the corner at x, y (in the top screen's pixels, as painted),
+// in the window's pixels, which height (also as painted) tells the scale of; or nowhere with the
+// flat map.
+func (pilot *Pilot) placeCornerDish(x, y, height float32, flat bool) {
+	if flat {
+		engine.PlaceSecondScreen(nil)
+		return
+	}
+	scale := windowHeight / height
+	pilot.cornerArea = draw2d.Rect{X: x * scale, Y: y * scale, Width: touchscreen.Width * cornerRadarShare * scale, Height: touchscreen.Height * cornerRadarShare * scale}
+	engine.PlaceSecondScreen(&pilot.cornerArea)
 }
 
 // deathCaption says who destroyed us, and when we may fly again.

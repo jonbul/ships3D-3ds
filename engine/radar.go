@@ -10,11 +10,8 @@ import (
 
 // radarScreen is the 3D radar on the second screen (the 3DS's bottom one), as in the 3DS program:
 // a scene under the interface, its camera above and behind the dish. The desktop has no second
-// screen: there the radar's scanner feeds the flat map in a corner (paintCornerRadar), and the
-// editor's Play shows the dish under the game with -3ds.
-//
-// TODO(akrck02): the 3D dish in the desktop's corner too, as the browser shows it; that needs a
-// second view in go-engine's window.
+// screen: there the same scene is placed in a corner of the window, as the browser's radar is
+// (paintCornerRadar), or the flat map when it is chosen.
 type radarScreen struct {
 	scene   *engine.Scene
 	camera  *engine.Node
