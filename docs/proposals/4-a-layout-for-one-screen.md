@@ -35,7 +35,7 @@ room and hides the game behind boxes. The pieces are right; the way they are lai
   the menus get a window sized for it. A click lands in those same pixels.
 - The radar on one screen: the sphere is placed in the corner (`engine.PlaceSecondScreen`), and
   the readings move out of the touch screen's picture, into the HUD and the hints.
-- Actions: `engine.json` binds `fire`, `menu`, `confirm`, `back`, `zoom-in`, `zoom-out`, the
+- Actions: `engine.json` binds `fire`, `menu`, `confirm`, `back`, the cross (which also zooms the radar), the
   menus' cross and pages, and the flight's axes, for `desktop` and `nintendo3ds`. The game reads
   `keys.Action`. The gyroscope and the curve of the sticks stay in code, since they are not
   buttons.
