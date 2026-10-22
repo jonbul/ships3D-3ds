@@ -1,7 +1,7 @@
 package arena
 
 import (
-	viewpoint "github.com/akrck02/go-renderer/camera"
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/scene"
 
@@ -125,7 +125,7 @@ func NewWorldIn(space *scene.Scene) *World {
 }
 
 // show places everything where the game says, and the camera behind our ship.
-func (world *World) Show(state *game.Game, events []game.Event, view *viewpoint.Camera, seconds, now float64) {
+func (world *World) Show(state *game.Game, events []game.Event, view *camera.Lens, seconds, now float64) {
 	world.title.Hidden = true
 	world.now = now
 	view.FieldOfViewRadians = chase.FieldOfView // the title sees narrower, through the same view
@@ -294,7 +294,7 @@ func (world *World) showBullets(state *game.Game) {
 	}
 }
 
-func (world *World) placeCamera(state *game.Game, view *viewpoint.Camera, seconds float64) {
+func (world *World) placeCamera(state *game.Game, view *camera.Lens, seconds float64) {
 	if state.Round != nil && state.Round.Seat != nil {
 		world.look(gunnerView(state), view)
 		return
@@ -317,7 +317,7 @@ func (world *World) placeCamera(state *game.Game, view *viewpoint.Camera, second
 }
 
 // look sees the world from seen.
-func (world *World) look(seen chase.View, view *viewpoint.Camera) {
+func (world *World) look(seen chase.View, view *camera.Lens) {
 	world.view = seen
 	view.Position = vectorOf(seen.Eye, 1)
 	view.Target = vectorOf(seen.Target, 1)

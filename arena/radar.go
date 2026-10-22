@@ -3,7 +3,7 @@ package arena
 import (
 	"math"
 
-	viewpoint "github.com/akrck02/go-renderer/camera"
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/scene"
 
@@ -48,7 +48,7 @@ var (
 const radarFieldOfView = 40 * math.Pi / 180
 
 // RadarView looks at the sphere from above and behind, as the browser's radar camera does.
-var RadarView = viewpoint.Camera{
+var RadarView = camera.Lens{
 	Position:           graphics.Vector{0, 1.5, -3.4, 1},
 	Target:             graphics.Vector{0, -0.1, 0, 1},
 	Up:                 graphics.Vector{0, 1, 0, 0},

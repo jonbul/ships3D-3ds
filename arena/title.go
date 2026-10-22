@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"math"
 
-	viewpoint "github.com/akrck02/go-renderer/camera"
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/scene"
 
@@ -32,7 +32,7 @@ const (
 )
 
 // titleCamera looks straight ahead, +Z, from the origin.
-var titleCamera = viewpoint.Camera{
+var titleCamera = camera.Lens{
 	Position:           graphics.Vector{0, 0, 0, 1},
 	Target:             graphics.Vector{0, 0, 1, 1},
 	Up:                 graphics.Vector{0, 1, 0, 0},
@@ -51,7 +51,7 @@ func titleShip() *scene.Node {
 }
 
 // showTitle flies the title's ship at now seconds and places the still camera.
-func (world *World) ShowTitle(now float64, view *viewpoint.Camera) {
+func (world *World) ShowTitle(now float64, view *camera.Lens) {
 	*view = titleCamera
 	world.view.Eye, world.view.Target = flight.Vector{}, flight.Forward
 	share := math.Mod(now, titleLoopSeconds) / titleLoopSeconds

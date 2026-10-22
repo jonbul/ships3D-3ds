@@ -5,7 +5,7 @@ import (
 	"math"
 
 	"github.com/akrck02/go-engine/engine"
-	viewpoint "github.com/akrck02/go-renderer/camera"
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/draw2d"
 
 	"github.com/jonbul/ships3D-3ds/arena"
@@ -29,7 +29,7 @@ type Pilot struct {
 	radar      *radarScreen
 	sound      *soundSet
 	played     *match.Match
-	view       viewpoint.Camera
+	view       camera.Lens
 	status     string
 	now        float64 // seconds, this frame
 	menu       touchMenu
@@ -58,7 +58,7 @@ func (pilot *Pilot) Start(context *engine.Context) {
 	if !oneScreen() {
 		showTouchScreen(pilot.paintTouchScreen)
 	}
-	pilot.view = viewpoint.Camera{Far: arena.CameraFar, Near: arena.CameraNear, FieldOfViewRadians: chase.FieldOfView}
+	pilot.view = camera.Lens{Far: arena.CameraFar, Near: arena.CameraNear, FieldOfViewRadians: chase.FieldOfView}
 	pilot.sound = gameSound
 	pilot.status = "Connecting to " + player.Server + "…"
 	played, err := match.Start(transport.Dial, player.Server, chosen.mode, matchCookie(), orDefault(chosen.shipID, defaultShip), playerName(), pilot.hooks())

@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/akrck02/go-engine/engine"
-	viewpoint "github.com/akrck02/go-renderer/camera"
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/draw2d"
 	"github.com/akrck02/go-renderer/scene"
 	ui "github.com/akrck02/go-ui"
@@ -111,7 +111,7 @@ func (choice *Ships) show(context *engine.Context) {
 	mesh := choice.world.ShipMesh(offered.Id, offered.Layers, false)
 	radius := ship.Radius(offered.Layers)
 	if choice.below != nil {
-		var view viewpoint.Camera
+		var view camera.Lens
 		choice.world.ShowTitle(context.Time, &view)
 		choice.world.HideTitle() // the ship turns on the touch screen; the top shows its name
 		look(context, view)

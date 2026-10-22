@@ -3,7 +3,7 @@ package arena
 import (
 	"math"
 
-	viewpoint "github.com/akrck02/go-renderer/camera"
+	"github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
 	"github.com/akrck02/go-renderer/scene"
 
@@ -57,7 +57,7 @@ var (
 // from above, where a design shows best: its top, its cockpit and its wings, rather than its belly.
 var (
 	HangarShipPlace = flight.Vector{0, 0, 22}
-	HangarCamera    = viewpoint.Camera{
+	HangarCamera    = camera.Lens{
 		Position: graphics.Vector{0, 7, -3, 1},
 		Target:   graphics.Vector{0, 1, 22, 1},
 		Up:       graphics.Vector{0, 1, 0, 0},
