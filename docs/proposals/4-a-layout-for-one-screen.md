@@ -21,8 +21,9 @@ room and hides the game behind boxes. The pieces are right; the way they are lai
 
 ## Out of scope
 
-- go-engine's surfaces (`SetSurface`): they paint with Go UI's widgets, and these screens are the
-  game's own pixel art in draw2d. They would need a way to paint draw2d inside a surface first.
+- go-engine's surfaces (`SetSurface`): a surface can paint draw2d (`context.Paint` gives its area
+  and draw list), so the touch screen and the one-screen menus can move onto surfaces, placed per
+  target in engine.json. Left for a later change: this one keeps their layout in the game.
 - The web build: it will take the one-screen layout when it exists.
 
 ## Design
