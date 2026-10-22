@@ -57,15 +57,20 @@ type Radar struct {
 // PaintRadar draws the radar over area at now seconds: the flat map, when it is flat, and the
 // readings around it either way.
 func PaintRadar(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) {
+	if shown.Flat {
+		PaintMap(drawing, area, shown, now)
+	}
+	paintReadings(drawing, area, shown, now) // the 3D radar is drawn under, by the radar scene
+}
+
+// PaintMap draws the flat map in area at now seconds: its rings, the sweep, the ships it saw with
+// their stalks, and our ship in the middle.
+func PaintMap(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) {
 	state := shown.State
 	radius := min(area.Width, area.Height)/2 - mapMargin
 	centreX, centreY := area.X+area.Width/2, area.Y+area.Height/2
 	circle := func(x, y, size float32, fill, border draw2d.Color, borderWidth float32) {
 		drawing.Rectangle(draw2d.Rect{X: x - size/2, Y: y - size/2, Width: size, Height: size}, mapCircleRadius, fill, border, borderWidth)
-	}
-	if !shown.Flat {
-		paintReadings(drawing, area, shown, now) // the 3D radar is drawn under, by the radar scene
-		return
 	}
 	circle(centreX, centreY, radius*2, mapTransparent, mapRing, ringWidth)
 	circle(centreX, centreY, radius, mapTransparent, mapRingFaint, ringWidth)
@@ -93,35 +98,16 @@ func PaintRadar(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64
 	if state.Alive {
 		circle(centreX, centreY, ownMarkerSize, mapOwn, mapTransparent, 0)
 	}
-	paintReadings(drawing, area, shown, now)
 }
 
 // paintReadings draws what both radars show around the dish: the speed, a hit's flash, life,
 // score, the range and how to open the options.
 func paintReadings(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) {
 	state := shown.State
-	distance := radar.Ranges[shown.Range]
-	paintSpeed(drawing, area, state.Own.Speed, state.Settings.MinSpeed, state.Settings.MaxSpeed)
-	if now-state.HitAt < hitFlashSeconds && state.HitAt > 0 {
-		// Hit: the screen's edge flashes red, fading.
-		flash := mapHit
-		flash[3] *= float32(1 - (now-state.HitAt)/hitFlashSeconds)
-		drawing.Rectangle(area, 0, mapTransparent, flash, hitFlashWidth)
-	}
-
-	lines := []string{ // life is on the top screen (hud.go)
-		strconv.Itoa(state.Player.Kills) + " kills, " + strconv.Itoa(state.Player.Deaths) + " deaths",
-	}
-	if !state.Alive {
-		lines = append(lines, respawnLine(state, now))
-	}
-	for index, line := range lines {
-		drawing.Text(line, area.X+labelMargin, area.Y+labelMargin+labelSize+float32(index)*labelLineSpacing, labelSize, draw2d.Regular, mapLabel)
-	}
-	// The zoom rather than the distance to the edge: the game's distances have no unit a player
-	// knows. The widest range is ×1.
-	zoom := radar.Ranges[len(radar.Ranges)-1] / distance
-	rangeText := "ZOOM x" + strconv.Itoa(int(zoom)) + " UP/DOWN"
+	PaintSpeed(drawing, area, state)
+	PaintHit(drawing, area, state, now)
+	PaintScore(drawing, area.X+labelMargin, area.Y+labelMargin, state, now)
+	rangeText := ZoomText(shown.Range) + " UP/DOWN"
 	drawing.Text(rangeText, area.X+labelMargin, area.Y+area.Height-labelMargin, labelPixels, draw2d.Mono, mapLabel)
 	menuKey := shown.MenuKey
 	if menuKey == "" {
@@ -129,6 +115,37 @@ func paintReadings(drawing *draw2d.List, area draw2d.Rect, shown Radar, now floa
 	}
 	menuText := menuKey + " MENU"
 	drawing.Text(menuText, area.X+area.Width-labelMargin-float32(len(menuText))*labelPixels, area.Y+area.Height-labelMargin, labelPixels, draw2d.Mono, mapLabel)
+}
+
+// PaintHit flashes area's edge red, fading, just after we were hit.
+func PaintHit(drawing *draw2d.List, area draw2d.Rect, state *game.Game, now float64) {
+	if now-state.HitAt >= hitFlashSeconds || state.HitAt <= 0 {
+		return
+	}
+	flash := mapHit
+	flash[3] *= float32(1 - (now-state.HitAt)/hitFlashSeconds)
+	drawing.Rectangle(area, 0, mapTransparent, flash, hitFlashWidth)
+}
+
+// PaintScore writes our kills and deaths, and how long until we fly again once destroyed, from
+// x, y down; life is with the HUD (package hud).
+func PaintScore(drawing *draw2d.List, x, y float32, state *game.Game, now float64) {
+	lines := [2]string{strconv.Itoa(state.Player.Kills) + " kills, " + strconv.Itoa(state.Player.Deaths) + " deaths"}
+	count := 1
+	if !state.Alive {
+		lines[1], count = respawnLine(state, now), 2
+	}
+	for index, line := range lines[:count] {
+		drawing.Text(line, x, y+labelSize+float32(index)*labelLineSpacing, labelSize, draw2d.Regular, mapLabel)
+	}
+}
+
+// ZoomText says how near the radar shows, by the index of its reach in radar.Ranges: the zoom
+// rather than the distance to the edge, as the game's distances have no unit a player knows. The
+// widest range is ×1.
+func ZoomText(rangeIndex int) string {
+	zoom := radar.Ranges[len(radar.Ranges)-1] / radar.Ranges[rangeIndex]
+	return "ZOOM x" + strconv.Itoa(int(zoom))
 }
 
 // paintSweep draws the radar's turning line as a row of dots, since the draw list has no lines,
@@ -146,9 +163,10 @@ func paintSweep(drawing *draw2d.List, centreX, centreY, radius float32, now floa
 	}
 }
 
-// paintSpeed draws the speed as a bar up the right edge: empty at the slowest reverse, full at
-// the fastest, with a mark where the ship stands still.
-func paintSpeed(drawing *draw2d.List, area draw2d.Rect, speed, slowest, fastest float64) {
+// PaintSpeed draws our speed as a bar up area's right edge: empty at the slowest reverse, full
+// at the fastest, with a mark where the ship stands still.
+func PaintSpeed(drawing *draw2d.List, area draw2d.Rect, state *game.Game) {
+	speed, slowest, fastest := state.Own.Speed, state.Settings.MinSpeed, state.Settings.MaxSpeed
 	if fastest <= slowest {
 		return
 	}

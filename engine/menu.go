@@ -42,7 +42,7 @@ func askedAccountForm(context *ui.Context) {
 // press acts on the menu's pages; B closes it.
 func (menu *touchMenu) press(pages []touchscreen.Page, read touchscreen.Input, now float64) {
 	read.Closes, read.TurnsPages = true, true
-	sound, closed := menu.shown.Press(pages, read, now)
+	sound, closed := menu.shown.Press(pages, read, panel(), now)
 	if closed {
 		menu.toggle()
 		return
@@ -50,7 +50,8 @@ func (menu *touchMenu) press(pages []touchscreen.Page, read touchscreen.Input, n
 	playMenuSound(sound)
 }
 
-// paint draws the menu's page.
-func (menu *touchMenu) paint(drawing *draw2d.List, pages []touchscreen.Page, now float64) {
-	menu.shown.Paint(drawing, pages, touchscreen.MenuHint, now)
+// paint draws the menu's page in screen, over the night on a 3DS's touch screen.
+func (menu *touchMenu) paint(drawing *draw2d.List, screen draw2d.Rect, pages []touchscreen.Page, now float64) {
+	ground(drawing, now)
+	menu.shown.Paint(drawing, screen, pages, menuHint(), now)
 }

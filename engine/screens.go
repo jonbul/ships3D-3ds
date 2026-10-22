@@ -24,14 +24,6 @@ var chosen = struct {
 	mode   match.Mode
 }{shipID: defaultShip, mode: match.FreeForAll}
 
-// confirmed tells whether the player said yes this frame: Enter, or Space (the 3DS's A).
-func confirmed(keys *engine.Input) bool {
-	return keys.Pressed(engine.KeyEnter) || keys.Pressed(engine.KeySpace)
-}
-
-// cancelled tells whether the player went back this frame: Escape (the 3DS's B).
-func cancelled(keys *engine.Input) bool { return keys.Pressed(engine.KeyEscape) }
-
 // stage gets a scene ready for one of the game's screens: the arena's space built in it, the
 // camera seeing as far as the sky.
 func stage(context *engine.Context) *arena.World {
@@ -68,7 +60,7 @@ func (title *Title) Start(context *engine.Context) {
 	drawOver(func(drawing *draw2d.List, width, height float32) {
 		paintScaled(drawing, width, height, title.paint)
 	})
-	if hasTouchScreen {
+	if !oneScreen() {
 		showTouchScreen(func(drawing *draw2d.List) { touchscreen.TitlePrompt(drawing, textMeasurer(), title.now) })
 	}
 }
@@ -88,7 +80,7 @@ func (title *Title) Update(context *engine.Context) {
 
 func (title *Title) paint(drawing *draw2d.List, width, height float32) {
 	topHeading(drawing, width, "Ships 3D", platformCaption)
-	if !hasTouchScreen {
+	if oneScreen() {
 		prompt(drawing, "PRESS ENTER OR A", width, height*0.75, title.now)
 	}
 }
@@ -117,9 +109,10 @@ func (choice *Modes) Start(context *engine.Context) {
 	drawOver(func(drawing *draw2d.List, width, height float32) {
 		paintScaled(drawing, width, height, choice.paint)
 	})
-	if hasTouchScreen {
+	if !oneScreen() {
 		showTouchScreen(func(drawing *draw2d.List) {
-			touchscreen.ModeChoice(drawing, textMeasurer(), modes, choice.chosen, choice.now)
+			ground(drawing, choice.now)
+			touchscreen.ModeChoice(drawing, textMeasurer(), touchscreen.FullScreen, modes, choice.chosen, modeHint(), choice.now)
 		})
 	}
 }
@@ -155,7 +148,7 @@ func (choice *Modes) touched(read touchscreen.Input) bool {
 	if read.Pressed&touchscreen.ButtonTouch == 0 {
 		return false
 	}
-	index := touchscreen.ModeTouched(read.TouchX, read.TouchY, len(modes))
+	index := touchscreen.ModeTouched(panel(), read.TouchX, read.TouchY, len(modes))
 	if index < 0 {
 		return false
 	}
@@ -164,12 +157,10 @@ func (choice *Modes) touched(read touchscreen.Input) bool {
 }
 
 func (choice *Modes) paint(drawing *draw2d.List, width, height float32) {
-	if hasTouchScreen {
+	if !oneScreen() {
 		mode := modes[choice.chosen]
 		topHeading(drawing, width, "Game mode", mode.Name)
 		return
 	}
-	paintPanel(drawing, width, height, func(drawing *draw2d.List) {
-		touchscreen.ModeChoice(drawing, textMeasurer(), modes, choice.chosen, choice.now)
-	})
+	touchscreen.ModeChoice(drawing, textMeasurer(), panelIn(width, height), modes, choice.chosen, modeHint(), choice.now)
 }

@@ -38,7 +38,7 @@ func (pilot *Pilot) pressMenus(context *engine.Context) bool {
 // opensMenu tells whether the player opened or closed the menu: START, and on the desktop also
 // Escape while it is closed, as games there pause (open, Escape is B and closes it).
 func (pilot *Pilot) opensMenu(keys *engine.Input) bool {
-	escaped := !hasTouchScreen && !pilot.menu.open && pilot.played.Game.Welcomed && cancelled(keys)
+	escaped := oneScreen() && !pilot.menu.open && pilot.played.Game.Welcomed && cancelled(keys)
 	return menuPressed(keys) || escaped
 }
 
@@ -46,7 +46,7 @@ func (pilot *Pilot) opensMenu(keys *engine.Input) bool {
 // player went back to the ships.
 func (pilot *Pilot) pressJoining(read touchscreen.Input) bool {
 	read.Closes = true
-	sound, closed := pilot.joining.Press([]touchscreen.Page{pilot.joiningPage()}, read, pilot.now)
+	sound, closed := pilot.joining.Press([]touchscreen.Page{pilot.joiningPage()}, read, panel(), pilot.now)
 	playMenuSound(sound)
 	return closed
 }
@@ -106,37 +106,55 @@ func (pilot *Pilot) problem() string {
 	return "Server: " + pilot.played.Game.Problem
 }
 
-// paintTouchScreen draws the touch screen: the menu, the window until we are welcomed, or the
-// radar's readings over the 3D radar (or the flat map).
+// paintTouchScreen draws the 3DS's touch screen: the menu, the window until we are welcomed, or
+// the radar's readings over the 3D radar (or the flat map).
 func (pilot *Pilot) paintTouchScreen(drawing *draw2d.List) {
-	switch {
-	case pilot.menu.open && pilot.played != nil:
-		pilot.menu.paint(drawing, pilot.pages(), pilot.now)
-	case pilot.played == nil || !pilot.played.Game.Welcomed:
-		pilot.joining.Paint(drawing, []touchscreen.Page{pilot.joiningPage()}, "B SHIPS", pilot.now)
-	default:
-		shown := touchscreen.Radar{State: pilot.played.Game, Scanner: pilot.radar.scanner, Range: pilot.zoom, Flat: player.Settings.FlatRadar}
-		touchscreen.PaintRadar(drawing, touchscreen.FullScreen, shown, pilot.now)
+	if pilot.menuShown() {
+		pilot.paintMenus(drawing, touchscreen.FullScreen)
+		return
 	}
+	shown := touchscreen.Radar{State: pilot.played.Game, Scanner: pilot.radar.scanner, Range: pilot.zoom, Flat: player.Settings.FlatRadar}
+	touchscreen.PaintRadar(drawing, touchscreen.FullScreen, shown, pilot.now)
 }
 
-// paintReadings paints over the 3D: the 3DS's life bar and the copilot, or the heading of a
-// destroyed ship, laid out in the 3DS's pixels and larger on a larger screen. The desktop, with no
-// touch screen, shows its pages in the middle, and the flat radar in a corner.
+// menuShown tells whether a window covers the game: the menu, or the one shown until we are
+// welcomed.
+func (pilot *Pilot) menuShown() bool {
+	return pilot.played == nil || !pilot.played.Game.Welcomed || pilot.menu.open
+}
+
+// paintMenus draws the menu, or the window shown until we are welcomed, in screen.
+func (pilot *Pilot) paintMenus(drawing *draw2d.List, screen draw2d.Rect) {
+	if pilot.played != nil && pilot.menu.open {
+		pilot.menu.paint(drawing, screen, pilot.pages(), pilot.now)
+		return
+	}
+	ground(drawing, pilot.now)
+	pilot.joining.Paint(drawing, screen, []touchscreen.Page{pilot.joiningPage()}, joiningHint(), pilot.now)
+}
+
+// paintReadings paints over the 3D, laid out in the layout's pixels (paintScaled): the HUD, and on
+// one screen what the 3DS's touch screen shows, laid out around the game (oneScreenReadings) or,
+// while a window covers the game, that window in the middle.
 func (pilot *Pilot) paintReadings(drawing *draw2d.List, width, height float32) {
 	paintScaled(drawing, width, height, func(drawing *draw2d.List, width, height float32) {
 		welcomed := pilot.played != nil && pilot.played.Game.Welcomed
+		hudWidth := width
+		if oneScreen() && welcomed {
+			hudWidth = width - cornerRadarSide - 2*cornerRadarMargin // the copilot keeps clear of the radar
+		}
 		if welcomed {
-			pilot.paintFlight(drawing, width, height)
+			pilot.paintFlight(drawing, hudWidth, height)
 		}
-		if hasTouchScreen {
+		if !oneScreen() {
 			return
 		}
-		if welcomed && !pilot.menu.open {
-			pilot.paintCornerRadar(drawing, width, height)
+		if pilot.menuShown() {
+			engine.PlaceSecondScreen(nil) // the window covers the corner
+			pilot.paintMenus(drawing, panelIn(width, height))
 			return
 		}
-		paintPanel(drawing, width, height, pilot.paintTouchScreen)
+		pilot.paintOneScreenReadings(drawing, width, height)
 	})
 }
 
@@ -160,42 +178,52 @@ func (pilot *Pilot) paintFlight(drawing *draw2d.List, width, height float32) {
 	}
 }
 
-// The desktop's radar: the touch screen's picture at this share of its size, in the bottom right
-// corner, margin pixels of the top screen from its edges.
+// One screen's radar, as the browser's: a square in the bottom right corner, margin pixels from
+// the window's edges, its range above it and the speed beside it, in the layout's pixels.
 const (
-	cornerRadarShare  = 0.5
-	cornerRadarMargin = 6
+	cornerRadarSide   = 150
+	cornerRadarMargin = 8
+	speedBarRoom      = 40 // the speed's bar and its number, left of the radar
+	radarLabelAbove   = 4
+	scoreTop          = 34 // under the life bar
+	scoreLeft         = 10
 )
 
-// paintCornerRadar is the desktop's radar, as the browser has it in a corner: the 3DS's touch
-// screen smaller, the 3D dish (the second screen's scene, placed there) or the flat map under its
-// readings.
-func (pilot *Pilot) paintCornerRadar(drawing *draw2d.List, width, height float32) {
+// oneScreenHints are the keys a match takes on one screen, along the bottom.
+const oneScreenHints = "SPACE FIRE   UP/DOWN ZOOM   TAB MENU"
+
+// paintOneScreenReadings lays the touch screen's readings out around the game: the radar in the
+// corner (the 3D sphere placed there, or the flat map), its range and the speed beside it, the
+// score under the life bar, a hit's flash round the window, and the keys along the bottom.
+func (pilot *Pilot) paintOneScreenReadings(drawing *draw2d.List, width, height float32) {
+	state := pilot.played.Game
+	corner := draw2d.Rect{X: width - cornerRadarSide - cornerRadarMargin, Y: height - cornerRadarSide - cornerRadarMargin, Width: cornerRadarSide, Height: cornerRadarSide}
 	flat := player.Settings.FlatRadar
-	x := width - touchscreen.Width*cornerRadarShare - cornerRadarMargin
-	y := height - touchscreen.Height*cornerRadarShare - cornerRadarMargin
-	pilot.placeCornerDish(x, y, height, flat)
-	start := len(drawing.Commands)
+	pilot.placeCornerSphere(corner, height, flat)
 	if flat {
-		drawing.Rectangle(touchscreen.FullScreen, 0, touchscreen.Colours.Screen, draw2d.Color{}, 0)
+		drawing.Rectangle(corner, cornerRadarSide/2, touchscreen.Colours.Screen, draw2d.Color{}, 0)
+		shown := touchscreen.Radar{State: state, Scanner: pilot.radar.scanner, Range: pilot.zoom, Flat: true}
+		touchscreen.PaintMap(drawing, corner, shown, pilot.now)
 	}
-	shown := touchscreen.Radar{State: pilot.played.Game, Scanner: pilot.radar.scanner, Range: pilot.zoom, Flat: flat, MenuKey: "TAB"}
-	touchscreen.PaintRadar(drawing, touchscreen.FullScreen, shown, pilot.now)
-	pixelart.Scale(drawing, start, cornerRadarShare)
-	pixelart.Move(drawing, start, x, y)
+	label := "RADAR  " + touchscreen.ZoomText(pilot.zoom)
+	drawing.Text(label, corner.X, corner.Y-radarLabelAbove, pixelart.LabelSize, draw2d.Mono, colours.soft)
+	speed := draw2d.Rect{X: corner.X - speedBarRoom, Y: corner.Y, Width: speedBarRoom, Height: corner.Height}
+	touchscreen.PaintSpeed(drawing, speed, state)
+	touchscreen.PaintScore(drawing, scoreLeft, scoreTop, state, pilot.now)
+	touchscreen.PaintHit(drawing, draw2d.Rect{Width: width, Height: height}, state, pilot.now)
+	hints(drawing, oneScreenHints, width, height)
 }
 
-// placeCornerDish puts the 3D dish in the corner at x, y (in the top screen's pixels, as painted),
-// in the window's pixels, which height (also as painted) tells the scale of; or nowhere with the
-// flat map.
-func (pilot *Pilot) placeCornerDish(x, y, height float32, flat bool) {
+// placeCornerSphere puts the 3D radar's sphere in the corner (in the layout's pixels, a screen
+// height of them high), in the window's pixels; or nowhere with the flat map.
+func (pilot *Pilot) placeCornerSphere(corner draw2d.Rect, height float32, flat bool) {
 	if flat {
 		engine.PlaceSecondScreen(nil)
 		return
 	}
 	scale := windowHeight / height
-	pilot.cornerArea = draw2d.Rect{X: x * scale, Y: y * scale, Width: touchscreen.Width * cornerRadarShare * scale, Height: touchscreen.Height * cornerRadarShare * scale}
-	engine.PlaceSecondScreen(&pilot.cornerArea)
+	pilot.cornerArea = draw2d.Rect{X: corner.X * scale, Y: corner.Y * scale, Width: corner.Width * scale, Height: corner.Height * scale}
+	engine.PlaceSecondScreenOver(&pilot.cornerArea) // floating over the game, as the browser's
 }
 
 // deathCaption says who destroyed us, and when we may fly again.

@@ -49,7 +49,7 @@ func (choice *Ships) Start(context *engine.Context) {
 	drawOver(func(drawing *draw2d.List, width, height float32) {
 		paintScaled(drawing, width, height, choice.paint)
 	})
-	if hasTouchScreen {
+	if !oneScreen() {
 		choice.below = openHangarScreen()
 		showTouchScreen(choice.paintTouchScreen)
 		return
@@ -127,7 +127,7 @@ func (choice *Ships) show(context *engine.Context) {
 // paintTouchScreen draws the arrows over the hangar, or the menu over it when it is open.
 func (choice *Ships) paintTouchScreen(drawing *draw2d.List) {
 	if choice.menu.open {
-		choice.menu.paint(drawing, choice.pages(), choice.now)
+		choice.menu.paint(drawing, touchscreen.FullScreen, choice.pages(), choice.now)
 		return
 	}
 	touchscreen.ShipChoice(drawing, textMeasurer(), choice.status)
@@ -208,7 +208,7 @@ func (choice *Ships) paint(drawing *draw2d.List, width, height float32) {
 		centred(drawing, choice.status, width, height-30, pixelart.TextSize, draw2d.Regular, colours.soft)
 	}
 	if choice.menu.open {
-		paintPanel(drawing, width, height, choice.paintTouchScreen)
+		choice.menu.paint(drawing, panelIn(width, height), choice.pages(), choice.now)
 		return
 	}
 	prompt(drawing, "ENTER/A LAUNCH", width, height-20, choice.now)

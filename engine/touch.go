@@ -23,25 +23,23 @@ const stickPush = 0.5
 // lands.
 var wasTouching bool
 
-// menuKeys are the keys the touch screen's menus read, by the buttons they stand for: the cross
-// as the arrows, A as Space, B as Escape, L and R as the shoulders.
-var menuKeys = []struct {
-	key    engine.Key
+// menuActions are the actions the touch screen's menus read, by the buttons they stand for.
+var menuActions = []struct {
+	action string
 	button touchscreen.Buttons
 }{
-	{engine.KeyUp, touchscreen.ButtonUp}, {engine.KeyDown, touchscreen.ButtonDown},
-	{engine.KeyLeft, touchscreen.ButtonLeft}, {engine.KeyRight, touchscreen.ButtonRight},
-	{engine.KeySpace, touchscreen.ButtonA}, {engine.KeyEnter, touchscreen.ButtonA},
-	{engine.KeyEscape, touchscreen.ButtonB},
-	{engine.ButtonLeftShoulder, touchscreen.ButtonL}, {engine.ButtonRightShoulder, touchscreen.ButtonR},
+	{"up", touchscreen.ButtonUp}, {"down", touchscreen.ButtonDown},
+	{"left", touchscreen.ButtonLeft}, {"right", touchscreen.ButtonRight},
+	{"confirm", touchscreen.ButtonA}, {"back", touchscreen.ButtonB},
+	{"previous page", touchscreen.ButtonL}, {"next page", touchscreen.ButtonR},
 }
 
 // touchInput is what the touch screen reads of this frame: the buttons pressed, and a touch that
 // has just landed, in the touch screen's pixels. Call it once a frame.
 func touchInput(keys *engine.Input) touchscreen.Input {
 	var read touchscreen.Input
-	for _, each := range menuKeys {
-		if keys.Pressed(each.key) {
+	for _, each := range menuActions {
+		if keys.Action(each.action).Pressed {
 			read.Pressed |= each.button
 		}
 	}

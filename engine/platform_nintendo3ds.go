@@ -2,10 +2,6 @@
 
 package main
 
-// hasTouchScreen is true on the 3DS: the touch screen shows the menus and the radar, and the top
-// screen only the game and its headings.
-const hasTouchScreen = true
-
 // platformCaption is the title's caption, under the game's name.
 const platformCaption = "for Nintendo 3DS"
 

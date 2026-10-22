@@ -55,7 +55,7 @@ func (pilot *Pilot) Start(context *engine.Context) {
 	pilot.radar = openRadar()
 	pilot.zoom = radar.DefaultRange
 	drawOver(pilot.paintReadings)
-	if hasTouchScreen {
+	if !oneScreen() {
 		showTouchScreen(pilot.paintTouchScreen)
 	}
 	pilot.view = models.Camera{Far: arena.CameraFar, Near: arena.CameraNear, FieldOfView: chase.FieldOfView}

@@ -36,7 +36,6 @@ const LevelSteps = 10
 
 // The menu's measures, in pixels.
 const (
-	visibleRows       = (Height - 2*fullPageMargin - rowsTop - hintsHeight) / rowHeight
 	smallWindowWidth  = 280
 	smallWindowMargin = 12
 	fullPageMargin    = 3 // the stars show around a page
@@ -83,6 +82,7 @@ const (
 // Menu is where the cursor is in the pages shown; it lasts while the same pages are shown.
 type Menu struct {
 	Page, cursor, scroll int
+	visible              int     // how many rows the page's window shows, in the screen it is laid out in
 	opened               string  // the first page's title when the menu was set up: other pages, other menu
 	openedAt             float64 // when, in seconds: the window unfolds from then
 }
@@ -93,8 +93,9 @@ const unfoldSeconds = 0.18
 // Reset makes the menu open new on the next frame, on its first page.
 func (shown *Menu) Reset() { shown.opened = "" }
 
-// prepare puts the cursor on the page's first choice when the pages are new, or a page changed.
-func (shown *Menu) prepare(pages []Page, now float64) {
+// prepare puts the cursor on the page's first choice when the pages are new, or a page changed,
+// and measures how many rows the page shows in screen.
+func (shown *Menu) prepare(pages []Page, screen draw2d.Rect, now float64) {
 	if len(pages) == 0 {
 		return
 	}
@@ -104,6 +105,7 @@ func (shown *Menu) prepare(pages []Page, now float64) {
 	}
 	shown.Page = min(shown.Page, len(pages)-1)
 	page := pages[shown.Page]
+	shown.visible = visibleRows(pageArea(page, screen))
 	if shown.cursor < 0 || shown.cursor >= len(page.Rows) || !page.Rows[shown.cursor].Chooseable() {
 		shown.cursor = firstChoice(page)
 	}
@@ -128,7 +130,7 @@ func firstChoice(page Page) int {
 // nothing to choose it scrolls instead. It tells whether anything moved.
 func (shown *Menu) move(page Page, step int) bool {
 	if shown.cursor < 0 {
-		scroll := min(max(shown.scroll+step, 0), max(len(page.Rows)-visibleRows, 0))
+		scroll := min(max(shown.scroll+step, 0), max(len(page.Rows)-shown.visible, 0))
 		moved := scroll != shown.scroll
 		shown.scroll = scroll
 		return moved
@@ -146,22 +148,22 @@ func (shown *Menu) move(page Page, step int) bool {
 // keepInSight scrolls so that the cursor's row shows, and the lines just above it too.
 func (shown *Menu) keepInSight(page Page) {
 	top := shown.cursor
-	for top > 0 && !page.Rows[top-1].Chooseable() && shown.cursor-top < visibleRows-1 {
+	for top > 0 && !page.Rows[top-1].Chooseable() && shown.cursor-top < shown.visible-1 {
 		top-- // a heading above a choice comes into sight with it
 	}
 	if top < shown.scroll {
 		shown.scroll = top
 	}
-	if shown.cursor >= shown.scroll+visibleRows {
-		shown.scroll = shown.cursor - visibleRows + 1
+	if shown.cursor >= shown.scroll+shown.visible {
+		shown.scroll = shown.cursor - shown.visible + 1
 	}
 }
 
-// Press acts on a frame's buttons and touch over pages: the cross moves, A activates, left and
-// right adjust, L and R turn pages, B closes. It gives back the sound to play and whether B
-// asked to close.
-func (shown *Menu) Press(pages []Page, input Input, now float64) (sound Sound, closed bool) {
-	shown.prepare(pages, now)
+// Press acts on a frame's buttons and touch over pages laid out in screen (a touch is in its
+// pixels): the cross moves, A activates, left and right adjust, L and R turn pages, B closes. It
+// gives back the sound to play and whether B asked to close.
+func (shown *Menu) Press(pages []Page, input Input, screen draw2d.Rect, now float64) (sound Sound, closed bool) {
+	shown.prepare(pages, screen, now)
 	if len(pages) == 0 {
 		return Silent, false
 	}
@@ -181,7 +183,7 @@ func (shown *Menu) Press(pages []Page, input Input, now float64) (sound Sound, c
 	case pressed&ButtonDown != 0:
 		return movedSound(shown.move(page, 1)), false
 	case pressed&ButtonTouch != 0:
-		return shown.touch(pages, input), false
+		return shown.touch(pages, input, screen), false
 	case shown.cursor < 0:
 		return Silent, false
 	case pressed&ButtonA != 0:
@@ -226,9 +228,9 @@ func adjust(row Row, step int) Sound {
 
 // touch acts on a touch: the ribbon's tabs turn the page, a row is chosen and activated, a touch
 // on a value's left half lowers it and on its right half raises it.
-func (shown *Menu) touch(pages []Page, input Input) Sound {
+func (shown *Menu) touch(pages []Page, input Input, screen draw2d.Rect) Sound {
 	page := pages[shown.Page]
-	area := pageArea(page)
+	area := pageArea(page, screen)
 	if input.TouchY < area.Y+ribbonHeight {
 		for index, place := range tabPlaces(area, pages, shown.Page) {
 			if input.TurnsPages && index != shown.Page && input.TouchX >= place.X && input.TouchX < place.X+place.Width {
@@ -238,7 +240,7 @@ func (shown *Menu) touch(pages []Page, input Input) Sound {
 		return Silent
 	}
 	index := shown.scroll + int((input.TouchY-area.Y-rowsTop)/rowHeight)
-	if input.TouchY < area.Y+rowsTop || index >= len(page.Rows) || index >= shown.scroll+visibleRows || !page.Rows[index].Chooseable() {
+	if input.TouchY < area.Y+rowsTop || index >= len(page.Rows) || index >= shown.scroll+shown.visible || !page.Rows[index].Chooseable() {
 		return Silent
 	}
 	shown.cursor = index
@@ -254,13 +256,25 @@ func (shown *Menu) touch(pages []Page, input Input) Sound {
 	return activate(row)
 }
 
-// pageArea is where a page's window is: the whole screen, or a small window in its middle.
-func pageArea(page Page) draw2d.Rect {
-	if !page.Small {
-		return pixelart.Inset(FullScreen, fullPageMargin)
+// pageArea is where a page's window is in screen: all of the touch screen, or in a taller screen as
+// tall as its rows need; a small page is a small window in the middle. None is taller than the
+// screen.
+func pageArea(page Page, screen draw2d.Rect) draw2d.Rect {
+	whole := pixelart.Inset(screen, fullPageMargin)
+	if !page.Small && screen.Height <= Height {
+		return whole // a page fills the touch screen
 	}
-	height := float32(rowsTop + len(page.Rows)*rowHeight + hintsHeight + smallWindowMargin)
-	return draw2d.Rect{X: (Width - smallWindowWidth) / 2, Y: (Height - height) / 2, Width: smallWindowWidth, Height: height}
+	height := min(float32(rowsTop+len(page.Rows)*rowHeight+hintsHeight+smallWindowMargin), whole.Height)
+	if !page.Small {
+		return draw2d.Rect{X: whole.X, Y: whole.Y + (whole.Height-height)/2, Width: whole.Width, Height: height}
+	}
+	width := min(smallWindowWidth, whole.Width)
+	return draw2d.Rect{X: screen.X + (screen.Width-width)/2, Y: screen.Y + (screen.Height-height)/2, Width: width, Height: height}
+}
+
+// visibleRows is how many rows fit in a page's window.
+func visibleRows(area draw2d.Rect) int {
+	return max(int((area.Height-rowsTop-hintsHeight)/rowHeight), 1)
 }
 
 func valueLeftOf(page Page) float32 {
@@ -270,15 +284,15 @@ func valueLeftOf(page Page) float32 {
 	return valueLeft
 }
 
-// Paint draws the page the menu is on over the night: its rows, cursor, tabs and hints.
-func (shown *Menu) Paint(drawing *draw2d.List, pages []Page, hint string, now float64) {
-	shown.prepare(pages, now)
+// Paint draws the page the menu is on, laid out in screen: its rows, cursor, tabs and hints.
+// What is behind it (the 3DS's night, or the game) is the caller's.
+func (shown *Menu) Paint(drawing *draw2d.List, screen draw2d.Rect, pages []Page, hint string, now float64) {
+	shown.prepare(pages, screen, now)
 	if len(pages) == 0 {
 		return
 	}
 	page := pages[shown.Page]
-	area := pageArea(page)
-	Starfield(drawing, now)
+	area := pageArea(page, screen)
 	if unfolded := (now - shown.openedAt) / unfoldSeconds; unfolded < 1 {
 		// The window unfolds from its middle line, as the old handhelds opened theirs.
 		height := max(float32(unfolded)*area.Height, 8)
@@ -289,14 +303,14 @@ func (shown *Menu) Paint(drawing *draw2d.List, pages []Page, hint string, now fl
 	for index, place := range tabPlaces(area, pages, shown.Page) {
 		tab(drawing, place, pages[index].Title, index == shown.Page)
 	}
-	for line := range min(visibleRows, len(page.Rows)-shown.scroll) {
+	for line := range min(shown.visible, len(page.Rows)-shown.scroll) {
 		index := shown.scroll + line
 		paintRow(drawing, area, page, page.Rows[index], area.Y+rowsTop+float32(line*rowHeight), index == shown.cursor, now)
 	}
 	if shown.scroll > 0 {
 		paintScrollMark(drawing, area, area.Y+rowsTop-6, -1)
 	}
-	if shown.scroll+visibleRows < len(page.Rows) {
+	if shown.scroll+shown.visible < len(page.Rows) {
 		paintScrollMark(drawing, area, area.Y+area.Height-hintsHeight-4, 1)
 	}
 	hints(drawing, area, hint)

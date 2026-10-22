@@ -46,8 +46,8 @@ func TestTheCursorSkipsLinesThatCannotBeChosen(test *testing.T) {
 		{Label: "second", Activate: func() { chosen = "second" }},
 	}}
 	var shown Menu
-	shown.Press([]Page{page}, Input{Pressed: ButtonDown}, 0)
-	sound, _ := shown.Press([]Page{page}, Input{Pressed: ButtonA}, 0)
+	shown.Press([]Page{page}, Input{Pressed: ButtonDown}, FullScreen, 0)
+	sound, _ := shown.Press([]Page{page}, Input{Pressed: ButtonA}, FullScreen, 0)
 	if chosen != "second" || sound != Chose {
 		test.Errorf("down then A chose %q with sound %d, want second with a choice's sound", chosen, sound)
 	}
@@ -56,10 +56,10 @@ func TestTheCursorSkipsLinesThatCannotBeChosen(test *testing.T) {
 func TestBClosesOnlyAMenuThatCloses(test *testing.T) {
 	pages := menuPages()
 	var shown Menu
-	if _, closed := shown.Press(pages, Input{Pressed: ButtonB}, 0); closed {
+	if _, closed := shown.Press(pages, Input{Pressed: ButtonB}, FullScreen, 0); closed {
 		test.Error("B closed a menu that doesn't close")
 	}
-	if sound, closed := shown.Press(pages, Input{Pressed: ButtonB, Closes: true}, 0); !closed || sound != Went {
+	if sound, closed := shown.Press(pages, Input{Pressed: ButtonB, Closes: true}, FullScreen, 0); !closed || sound != Went {
 		test.Errorf("B gave closed %v and sound %d, want closed and the going back's sound", closed, sound)
 	}
 }
@@ -67,7 +67,7 @@ func TestBClosesOnlyAMenuThatCloses(test *testing.T) {
 func TestLAndRTurnThePagesRoundTheEnds(test *testing.T) {
 	pages := menuPages()
 	var shown Menu
-	shown.Press(pages, Input{Pressed: ButtonL, TurnsPages: true}, 0)
+	shown.Press(pages, Input{Pressed: ButtonL, TurnsPages: true}, FullScreen, 0)
 	if shown.Page != len(pages)-1 {
 		test.Errorf("L from the first page went to page %d, want the last, %d", shown.Page, len(pages)-1)
 	}
@@ -77,11 +77,11 @@ func TestATouchOnALevelsLeftHalfLowersIt(test *testing.T) {
 	steps := 0
 	page := Page{Title: "TEST", Rows: []Row{{Label: "Music", HasLevel: true, Adjust: func(step int) { steps += step }}}}
 	var shown Menu
-	area := pageArea(page)
+	area := pageArea(page, FullScreen)
 	top := area.Y + rowsTop + rowHeight/2
-	shown.Press([]Page{page}, Input{Pressed: ButtonTouch, TouchX: area.X + valueLeft + 1, TouchY: top}, 0)
-	shown.Press([]Page{page}, Input{Pressed: ButtonTouch, TouchX: area.X + area.Width - 2, TouchY: top}, 0)
-	shown.Press([]Page{page}, Input{Pressed: ButtonTouch, TouchX: area.X + area.Width - 2, TouchY: top}, 0)
+	shown.Press([]Page{page}, Input{Pressed: ButtonTouch, TouchX: area.X + valueLeft + 1, TouchY: top}, FullScreen, 0)
+	shown.Press([]Page{page}, Input{Pressed: ButtonTouch, TouchX: area.X + area.Width - 2, TouchY: top}, FullScreen, 0)
+	shown.Press([]Page{page}, Input{Pressed: ButtonTouch, TouchX: area.X + area.Width - 2, TouchY: top}, FullScreen, 0)
 	if steps != 1 {
 		test.Errorf("one touch on the left and two on the right added %d steps, want 1", steps)
 	}
@@ -127,18 +127,18 @@ func TestTheHangarsArrowsAreTheScreensThirds(test *testing.T) {
 func TestAMenuPaintsItsWindowOverTheNight(test *testing.T) {
 	var shown Menu
 	var drawing draw2d.List
-	shown.Paint(&drawing, menuPages(), MenuHint, unfoldSeconds)
+	shown.Paint(&drawing, FullScreen, menuPages(), MenuHint, unfoldSeconds)
 	if len(drawing.Commands) == 0 {
 		test.Fatal("the menu drew nothing")
 	}
 }
 
 func TestATouchOnAModesCardChoosesIt(test *testing.T) {
-	card := modeCard(1, 2)
-	if got := ModeTouched(card.X+card.Width/2, card.Y+card.Height/2, 2); got != 1 {
+	card := modeCard(FullScreen, 1, 2)
+	if got := ModeTouched(FullScreen, card.X+card.Width/2, card.Y+card.Height/2, 2); got != 1 {
 		test.Errorf("a touch in the second card's middle chose mode %d, want 1", got)
 	}
-	if got := ModeTouched(1, 1, 2); got != -1 {
+	if got := ModeTouched(FullScreen, 1, 1, 2); got != -1 {
 		test.Errorf("a touch in the screen's corner chose mode %d, want none", got)
 	}
 }
@@ -180,5 +180,31 @@ func TestTheLobbyPageSaysWhoWaitsAndWhenTheRoundStarts(test *testing.T) {
 	lobby.CountingDown, lobby.StartsAt = true, 12.2
 	if counting := labels(LobbyPage(lobby, "me", 0, nil)); !strings.Contains(counting, "Starting in 13 s") {
 		test.Errorf("the counting lobby says:\n%s", counting)
+	}
+}
+
+func TestAPageInATallerScreenShowsMoreRows(test *testing.T) {
+	rows := make([]Row, 40)
+	for index := range rows {
+		rows[index] = Row{Label: "line", Activate: func() {}}
+	}
+	page := []Page{{Title: "LONG", Rows: rows}}
+	var small, tall Menu
+	var drawing draw2d.List
+	small.Paint(&drawing, FullScreen, page, MenuHint, unfoldSeconds)
+	tall.Paint(&drawing, draw2d.Rect{Width: 640, Height: 480}, page, MenuHint, unfoldSeconds)
+	if tall.visible <= small.visible {
+		test.Errorf("a screen twice as tall shows %d rows, the touch screen %d", tall.visible, small.visible)
+	}
+}
+
+func TestAModesCardIsFoundWhereItWasDrawnInAnyScreen(test *testing.T) {
+	screen := draw2d.Rect{X: 100, Y: 50, Width: 600, Height: 300}
+	card := modeCard(screen, 0, 2)
+	if card.X < screen.X || card.X+card.Width > screen.X+screen.Width || card.Y < screen.Y {
+		test.Fatalf("the card %+v is outside its screen %+v", card, screen)
+	}
+	if got := ModeTouched(screen, card.X+1, card.Y+1, 2); got != 0 {
+		test.Errorf("a touch on the first card chose mode %d", got)
 	}
 }
