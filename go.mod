@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/akrck02/go-3ds v0.2.0
-	github.com/akrck02/go-engine v0.0.4-0.20261022165807-b97fe9421fc5
+	github.com/akrck02/go-engine v0.0.4-0.20261022214102-89791f89e2c4
 	github.com/akrck02/go-renderer v0.2.1-0.20261022165616-c94e9f596875
 	github.com/akrck02/go-sound v0.1.1
 	github.com/akrck02/go-ui v0.1.2-0.20261022165652-0de392313806
