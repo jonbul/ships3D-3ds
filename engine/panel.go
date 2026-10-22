@@ -57,7 +57,7 @@ func panelInput(keys *engine.Input) touchscreen.Input {
 // onPanel is where a point of the window lands on the panel, in the panel's pixels, and whether
 // it lands on it at all.
 func onPanel(x, y float64) (touchX, touchY float32, inside bool) {
-	scale := screenScale(windowHeight)
+	scale := screenScale(windowWidth, windowHeight)
 	area := panelArea(windowWidth/scale, windowHeight/scale)
 	touchX, touchY = float32(x)/scale-area.X, float32(y)/scale-area.Y
 	inside = touchX >= 0 && touchY >= 0 && touchX < area.Width && touchY < area.Height

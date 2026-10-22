@@ -33,6 +33,7 @@ const (
 	promptShows    = 0.65
 	cursorStarSize = 1.4
 	screenHigh     = 240 // the 3DS top screen's height, which the screens are laid out in
+	screenWide     = 400 // and its width
 )
 
 // cursorStar is the cursor beside what is chosen, as on the 3DS: '#' the accent, '+' lighter.
@@ -92,16 +93,17 @@ func topHeading(drawing *draw2d.List, width float32, heading, caption string) {
 // paintScaled paints a screen laid out in the 3DS top screen's pixels, larger on a larger screen
 // so it looks the same: paint gets the width and height in those pixels.
 func paintScaled(drawing *draw2d.List, width, height float32, paint func(drawing *draw2d.List, width, height float32)) {
-	scale := screenScale(height)
+	scale := screenScale(width, height)
 	start := len(drawing.Commands)
 	paint(drawing, width/scale, height/scale)
 	pixelart.Scale(drawing, start, scale)
 }
 
-// screenScale is how many of a window's pixels, height pixels high, each of the 3DS top screen's
-// pixels takes: a whole number, so the pixel art stays crisp.
-func screenScale(height float32) float32 {
-	return float32(max(1, math.Floor(float64(height)/screenHigh)))
+// screenScale is how many of a window's pixels, width × height, each of the 3DS top screen's
+// pixels takes: as many as fit both ways, so nothing spills over the sides of a narrow window, and
+// a whole number, so the pixel art stays crisp.
+func screenScale(width, height float32) float32 {
+	return float32(max(1, math.Floor(min(float64(width)/screenWide, float64(height)/screenHigh))))
 }
 
 // window draws a window of glass over area, with a title on a ribbon of the accent when title

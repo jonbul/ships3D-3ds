@@ -12,3 +12,10 @@ func TestAClickLandsOnThePanelInItsOwnPixels(test *testing.T) {
 		test.Error("a click in the window's corner lands on the panel")
 	}
 }
+
+func TestANarrowWindowScalesTheScreensToItsWidth(test *testing.T) {
+	// 900 pixels wide fit the 400-pixel-wide top screen twice, though 960 high fit it four times.
+	if scale := screenScale(900, 960); scale != 2 {
+		test.Errorf("a 900 × 960 window scales the screens by %v, want 2 so they fit its width", scale)
+	}
+}
