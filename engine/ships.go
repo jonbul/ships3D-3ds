@@ -211,6 +211,6 @@ func (choice *Ships) paint(drawing *draw2d.List, width, height float32) {
 		choice.menu.paint(drawing, panelIn(width, height), choice.pages(), choice.now)
 		return
 	}
-	prompt(drawing, "ENTER/A LAUNCH", width, height-20, choice.now)
-	hints(drawing, "< > SHIP   ESC/B BACK   TAB MENU", width, height)
+	prompt(drawing, launchHint.shown(), width, height-20, choice.now)
+	hints(drawing, shipHints.shown(), width, height)
 }

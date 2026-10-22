@@ -37,6 +37,7 @@ var menuActions = []struct {
 // touchInput is what the touch screen reads of this frame: the buttons pressed, and a touch that
 // has just landed, in the touch screen's pixels. Call it once a frame.
 func touchInput(keys *engine.Input) touchscreen.Input {
+	hintKeys = keys
 	var read touchscreen.Input
 	for _, each := range menuActions {
 		if keys.Action(each.action).Pressed {

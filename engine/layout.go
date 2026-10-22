@@ -93,28 +93,3 @@ func panelInput(keys *engine.Input) touchscreen.Input {
 	}
 	return read
 }
-
-// The menus' hints on one screen, with a keyboard's keys; a 3DS's are touchscreen's own.
-const (
-	oneScreenMenuHint    = "ENTER OK  ESC BACK  Q/E PAGE"
-	oneScreenModeHint    = "< > CHOOSE  ENTER OK  ESC BACK"
-	oneScreenJoiningHint = "ESC SHIPS"
-	joiningHint3DS       = "B SHIPS"
-)
-
-// menuHint is the keys the menu's pages take, on this layout.
-func menuHint() string { return layoutText(oneScreenMenuHint, touchscreen.MenuHint) }
-
-// modeHint is the keys the modes take, on this layout.
-func modeHint() string { return layoutText(oneScreenModeHint, touchscreen.ModeHint) }
-
-// joiningHint is the keys the window shown until we are welcomed takes, on this layout.
-func joiningHint() string { return layoutText(oneScreenJoiningHint, joiningHint3DS) }
-
-// layoutText is one text on one screen and another on two.
-func layoutText(onOne, onTwo string) string {
-	if oneScreen() {
-		return onOne
-	}
-	return onTwo
-}

@@ -130,7 +130,7 @@ func (pilot *Pilot) paintMenus(drawing *draw2d.List, screen draw2d.Rect) {
 		return
 	}
 	ground(drawing, pilot.now)
-	pilot.joining.Paint(drawing, screen, []touchscreen.Page{pilot.joiningPage()}, joiningHint(), pilot.now)
+	pilot.joining.Paint(drawing, screen, []touchscreen.Page{pilot.joiningPage()}, joiningHints.shown(), pilot.now)
 }
 
 // paintReadings paints over the 3D, laid out in the layout's pixels (paintScaled): the HUD, and on
@@ -189,9 +189,6 @@ const (
 	scoreLeft         = 10
 )
 
-// oneScreenHints are the keys a match takes on one screen, along the bottom.
-const oneScreenHints = "SPACE FIRE   UP/DOWN ZOOM   TAB MENU"
-
 // paintOneScreenReadings lays the touch screen's readings out around the game: the radar in the
 // corner (the 3D sphere placed there, or the flat map), its range and the speed beside it, the
 // score under the life bar, a hit's flash round the window, and the keys along the bottom.
@@ -211,7 +208,7 @@ func (pilot *Pilot) paintOneScreenReadings(drawing *draw2d.List, width, height f
 	touchscreen.PaintSpeed(drawing, speed, state)
 	touchscreen.PaintScore(drawing, scoreLeft, scoreTop, state, pilot.now)
 	touchscreen.PaintHit(drawing, draw2d.Rect{Width: width, Height: height}, state, pilot.now)
-	hints(drawing, oneScreenHints, width, height)
+	hints(drawing, matchHints.shown(), width, height)
 }
 
 // placeCornerSphere puts the 3D radar's sphere in the corner (in the layout's pixels, a screen

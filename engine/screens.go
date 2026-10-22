@@ -81,7 +81,7 @@ func (title *Title) Update(context *engine.Context) {
 func (title *Title) paint(drawing *draw2d.List, width, height float32) {
 	topHeading(drawing, width, "Ships 3D", platformCaption)
 	if oneScreen() {
-		prompt(drawing, "PRESS ENTER OR A", width, height*0.75, title.now)
+		prompt(drawing, startHint.shown(), width, height*0.75, title.now)
 	}
 }
 
@@ -112,7 +112,7 @@ func (choice *Modes) Start(context *engine.Context) {
 	if !oneScreen() {
 		showTouchScreen(func(drawing *draw2d.List) {
 			ground(drawing, choice.now)
-			touchscreen.ModeChoice(drawing, textMeasurer(), touchscreen.FullScreen, modes, choice.chosen, modeHint(), choice.now)
+			touchscreen.ModeChoice(drawing, textMeasurer(), touchscreen.FullScreen, modes, choice.chosen, modeHints.shown(), choice.now)
 		})
 	}
 }
@@ -162,5 +162,5 @@ func (choice *Modes) paint(drawing *draw2d.List, width, height float32) {
 		topHeading(drawing, width, "Game mode", mode.Name)
 		return
 	}
-	touchscreen.ModeChoice(drawing, textMeasurer(), panelIn(width, height), modes, choice.chosen, modeHint(), choice.now)
+	touchscreen.ModeChoice(drawing, textMeasurer(), panelIn(width, height), modes, choice.chosen, modeHints.shown(), choice.now)
 }

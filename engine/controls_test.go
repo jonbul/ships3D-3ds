@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
+
+	"github.com/akrck02/go-engine/engine"
 )
 
 // onlyOn are the actions bound on one target alone, and why: elsewhere a stick or nothing does it.
@@ -49,5 +51,15 @@ func TestEveryActionTheGameReadsIsBoundOnTheDesktopAndThe3DS(test *testing.T) {
 	}
 	if checked == 0 {
 		test.Fatal("no action found in the game's code: the test reads nothing")
+	}
+}
+
+func TestAHintLineNamesTheKeysBoundToItsActions(test *testing.T) {
+	engine.BindActions(map[string]map[string][]string{
+		"confirm": {"desktop": {"Enter"}}, "back": {"desktop": {"Escape"}},
+	}, "desktop")
+	line := &hintLine{parts: []hintPart{{[]string{"confirm"}, "OK"}, {[]string{"back"}, "BACK"}}}
+	if got := line.made(&engine.Input{}); got != "ENTER OK   ESC BACK" {
+		test.Errorf("the line says %q, want the keys bound, ENTER OK   ESC BACK", got)
 	}
 }
