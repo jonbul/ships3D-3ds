@@ -62,4 +62,4 @@ Built and played on Linux (1280 × 720, 900 × 960, 700 × 600) and in Azahar:
   touch screen.
 
 Not done: the surfaces (see Out of scope), a pad's sticks were not tried, and nothing was played
-on a real console. go-engine is pinned to `feature/second-screen-area` until its PRs merge.
+on a real console. go-engine is taken from its main (66a7e73), which has the floating second screen.
