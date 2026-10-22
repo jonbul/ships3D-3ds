@@ -43,8 +43,9 @@ var (
 	RadarBackground = graphics.Vec4{0.0044, 0.010, 0.016, 1} // #0e1a22, the touch screen's dark
 )
 
-// radarFieldOfView is the browser's radar camera's, 32 degrees, in radians.
-const radarFieldOfView = 32 * math.Pi / 180
+// radarFieldOfView is how wide the radar's camera sees, in radians: 40 degrees, a little wider
+// than the browser's 32, so the whole sphere fits a screen as short as the 3DS's touch screen.
+const radarFieldOfView = 40 * math.Pi / 180
 
 // RadarView looks at the sphere from above and behind, as the browser's radar camera does.
 var RadarView = models.Camera{
