@@ -51,7 +51,7 @@ func (menu *touchMenu) press(pages []touchscreen.Page, read touchscreen.Input, n
 }
 
 // paint draws the menu's page in screen, over the night on a 3DS's touch screen.
-func (menu *touchMenu) paint(drawing *draw2d.List, screen draw2d.Rect, pages []touchscreen.Page, now float64) {
+func (menu *touchMenu) paint(drawing *draw2d.List, screen draw2d.Rectangle, pages []touchscreen.Page, now float64) {
 	ground(drawing, now)
 	menu.shown.Paint(drawing, screen, pages, menuHints.shown(), now)
 }

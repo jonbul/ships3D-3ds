@@ -33,8 +33,8 @@ const (
 )
 
 var (
-	hitColour    = graphics.Vec4{1, 0.95, 0.7, 1}
-	blastColour  = graphics.Vec4{1, 0.45, 0.12, 1}
+	hitColour    = graphics.Vector{1, 0.95, 0.7, 1}
+	blastColour  = graphics.Vector{1, 0.45, 0.12, 1}
 	debrisColour = [3]float32{1, 0.6, 0.25}
 )
 
@@ -44,7 +44,7 @@ type burst struct {
 	at       float64
 	seconds  float64
 	size     float64
-	colour   graphics.Vec4
+	colour   graphics.Vector
 	position flight.Vector
 }
 
@@ -131,9 +131,9 @@ func (all *bursts) show(now, seconds float64) {
 		// Swells fast, then holds while it fades.
 		grown := min(1, age/(flash.seconds*0.35))
 		scale := float32(flash.size * (0.3 + 0.7*grown))
-		flash.node.Transform = graphics.Translate(vectorOf(flash.position, 0)).Multiply(graphics.Scale(graphics.Vec4{scale, scale, scale, 0}))
+		flash.node.Transform = graphics.Translate(vectorOf(flash.position, 0)).Multiply(graphics.Scale(graphics.Vector{scale, scale, scale, 0}))
 		shade := float32(fade)
-		flash.node.Mesh.Material.BaseColor = graphics.Vec4{flash.colour[0] * shade, flash.colour[1] * shade, flash.colour[2] * shade, 1}
+		flash.node.Mesh.Material.BaseColor = graphics.Vector{flash.colour[0] * shade, flash.colour[1] * shade, flash.colour[2] * shade, 1}
 	}
 	for index := range all.debris {
 		bit := &all.debris[index]
@@ -145,7 +145,7 @@ func (all *bursts) show(now, seconds float64) {
 		bit.position = bit.position.Add(bit.velocity.Times(seconds))
 		bit.node.Transform = graphics.Translate(vectorOf(bit.position, 0))
 		shade := float32(fade)
-		bit.node.Mesh.Material.BaseColor = graphics.Vec4{shade, shade, shade, 1}
+		bit.node.Mesh.Material.BaseColor = graphics.Vector{shade, shade, shade, 1}
 	}
 }
 

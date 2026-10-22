@@ -5,8 +5,8 @@ import (
 	"math"
 
 	"github.com/akrck02/go-engine/engine"
+	viewpoint "github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/draw2d"
-	"github.com/akrck02/go-renderer/models"
 
 	"github.com/jonbul/ships3D-3ds/arena"
 	"github.com/jonbul/ships3D-3ds/chase"
@@ -29,16 +29,16 @@ type Pilot struct {
 	radar      *radarScreen
 	sound      *soundSet
 	played     *match.Match
-	view       models.Camera
+	view       viewpoint.Camera
 	status     string
 	now        float64 // seconds, this frame
 	menu       touchMenu
 	joining    touchscreen.Menu // the window while the server hasn't welcomed us yet
 	zoom       int              // the radar's reach, an index in radar.Ranges
 	figures    figures.Counter
-	logged     float64     // seconds, when the figures were last written to the log
-	leaving    bool        // a choice of the menu asked to go back to the ships
-	cornerArea draw2d.Rect // where the desktop shows the 3D radar, in the window's pixels
+	logged     float64          // seconds, when the figures were last written to the log
+	leaving    bool             // a choice of the menu asked to go back to the ships
+	cornerArea draw2d.Rectangle // where the desktop shows the 3D radar, in the window's pixels
 }
 
 // The real server, and what a guest flies when the scene names nothing.
@@ -58,7 +58,7 @@ func (pilot *Pilot) Start(context *engine.Context) {
 	if !oneScreen() {
 		showTouchScreen(pilot.paintTouchScreen)
 	}
-	pilot.view = models.Camera{Far: arena.CameraFar, Near: arena.CameraNear, FieldOfView: chase.FieldOfView}
+	pilot.view = viewpoint.Camera{Far: arena.CameraFar, Near: arena.CameraNear, FieldOfViewRadians: chase.FieldOfView}
 	pilot.sound = gameSound
 	pilot.status = "Connecting to " + player.Server + "…"
 	played, err := match.Start(transport.Dial, player.Server, chosen.mode, matchCookie(), orDefault(chosen.shipID, defaultShip), playerName(), pilot.hooks())

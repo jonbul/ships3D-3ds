@@ -124,7 +124,7 @@ func (pilot *Pilot) menuShown() bool {
 }
 
 // paintMenus draws the menu, or the window shown until we are welcomed, in screen.
-func (pilot *Pilot) paintMenus(drawing *draw2d.List, screen draw2d.Rect) {
+func (pilot *Pilot) paintMenus(drawing *draw2d.List, screen draw2d.Rectangle) {
 	if pilot.played != nil && pilot.menu.open {
 		pilot.menu.paint(drawing, screen, pilot.pages(), pilot.now)
 		return
@@ -194,7 +194,7 @@ const (
 // score under the life bar, a hit's flash round the window, and the keys along the bottom.
 func (pilot *Pilot) paintOneScreenReadings(drawing *draw2d.List, width, height float32) {
 	state := pilot.played.Game
-	corner := draw2d.Rect{X: width - cornerRadarSide - cornerRadarMargin, Y: height - cornerRadarSide - cornerRadarMargin, Width: cornerRadarSide, Height: cornerRadarSide}
+	corner := draw2d.Rectangle{X: width - cornerRadarSide - cornerRadarMargin, Y: height - cornerRadarSide - cornerRadarMargin, Width: cornerRadarSide, Height: cornerRadarSide}
 	flat := player.Settings.FlatRadar
 	pilot.placeCornerSphere(corner, height, flat)
 	if flat {
@@ -204,22 +204,22 @@ func (pilot *Pilot) paintOneScreenReadings(drawing *draw2d.List, width, height f
 	}
 	label := "RADAR  " + touchscreen.ZoomText(pilot.zoom)
 	drawing.Text(label, corner.X, corner.Y-radarLabelAbove, pixelart.LabelSize, draw2d.Mono, colours.soft)
-	speed := draw2d.Rect{X: corner.X - speedBarRoom, Y: corner.Y, Width: speedBarRoom, Height: corner.Height}
+	speed := draw2d.Rectangle{X: corner.X - speedBarRoom, Y: corner.Y, Width: speedBarRoom, Height: corner.Height}
 	touchscreen.PaintSpeed(drawing, speed, state)
 	touchscreen.PaintScore(drawing, scoreLeft, scoreTop, state, pilot.now)
-	touchscreen.PaintHit(drawing, draw2d.Rect{Width: width, Height: height}, state, pilot.now)
+	touchscreen.PaintHit(drawing, draw2d.Rectangle{Width: width, Height: height}, state, pilot.now)
 	hints(drawing, matchHints.shown(), width, height)
 }
 
 // placeCornerSphere puts the 3D radar's sphere in the corner (in the layout's pixels, a screen
 // height of them high), in the window's pixels; or nowhere with the flat map.
-func (pilot *Pilot) placeCornerSphere(corner draw2d.Rect, height float32, flat bool) {
+func (pilot *Pilot) placeCornerSphere(corner draw2d.Rectangle, height float32, flat bool) {
 	if flat {
 		engine.PlaceSecondScreen(nil)
 		return
 	}
 	scale := windowHeight / height
-	pilot.cornerArea = draw2d.Rect{X: corner.X * scale, Y: corner.Y * scale, Width: corner.Width * scale, Height: corner.Height * scale}
+	pilot.cornerArea = draw2d.Rectangle{X: corner.X * scale, Y: corner.Y * scale, Width: corner.Width * scale, Height: corner.Height * scale}
 	engine.PlaceSecondScreenOver(&pilot.cornerArea) // floating over the game, as the browser's
 }
 

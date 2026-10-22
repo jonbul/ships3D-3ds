@@ -95,7 +95,7 @@ func (shown *Menu) Reset() { shown.opened = "" }
 
 // prepare puts the cursor on the page's first choice when the pages are new, or a page changed,
 // and measures how many rows the page shows in screen.
-func (shown *Menu) prepare(pages []Page, screen draw2d.Rect, now float64) {
+func (shown *Menu) prepare(pages []Page, screen draw2d.Rectangle, now float64) {
 	if len(pages) == 0 {
 		return
 	}
@@ -162,7 +162,7 @@ func (shown *Menu) keepInSight(page Page) {
 // Press acts on a frame's buttons and touch over pages laid out in screen (a touch is in its
 // pixels): the cross moves, A activates, left and right adjust, L and R turn pages, B closes. It
 // gives back the sound to play and whether B asked to close.
-func (shown *Menu) Press(pages []Page, input Input, screen draw2d.Rect, now float64) (sound Sound, closed bool) {
+func (shown *Menu) Press(pages []Page, input Input, screen draw2d.Rectangle, now float64) (sound Sound, closed bool) {
 	shown.prepare(pages, screen, now)
 	if len(pages) == 0 {
 		return Silent, false
@@ -228,7 +228,7 @@ func adjust(row Row, step int) Sound {
 
 // touch acts on a touch: the ribbon's tabs turn the page, a row is chosen and activated, a touch
 // on a value's left half lowers it and on its right half raises it.
-func (shown *Menu) touch(pages []Page, input Input, screen draw2d.Rect) Sound {
+func (shown *Menu) touch(pages []Page, input Input, screen draw2d.Rectangle) Sound {
 	page := pages[shown.Page]
 	area := pageArea(page, screen)
 	if input.TouchY < area.Y+ribbonHeight {
@@ -259,21 +259,21 @@ func (shown *Menu) touch(pages []Page, input Input, screen draw2d.Rect) Sound {
 // pageArea is where a page's window is in screen: all of the touch screen, or in a taller screen as
 // tall as its rows need; a small page is a small window in the middle. None is taller than the
 // screen.
-func pageArea(page Page, screen draw2d.Rect) draw2d.Rect {
+func pageArea(page Page, screen draw2d.Rectangle) draw2d.Rectangle {
 	whole := pixelart.Inset(screen, fullPageMargin)
 	if !page.Small && screen.Height <= Height {
 		return whole // a page fills the touch screen
 	}
 	height := min(float32(rowsTop+len(page.Rows)*rowHeight+hintsHeight+smallWindowMargin), whole.Height)
 	if !page.Small {
-		return draw2d.Rect{X: whole.X, Y: whole.Y + (whole.Height-height)/2, Width: whole.Width, Height: height}
+		return draw2d.Rectangle{X: whole.X, Y: whole.Y + (whole.Height-height)/2, Width: whole.Width, Height: height}
 	}
 	width := min(smallWindowWidth, whole.Width)
-	return draw2d.Rect{X: screen.X + (screen.Width-width)/2, Y: screen.Y + (screen.Height-height)/2, Width: width, Height: height}
+	return draw2d.Rectangle{X: screen.X + (screen.Width-width)/2, Y: screen.Y + (screen.Height-height)/2, Width: width, Height: height}
 }
 
 // visibleRows is how many rows fit in a page's window.
-func visibleRows(area draw2d.Rect) int {
+func visibleRows(area draw2d.Rectangle) int {
 	return max(int((area.Height-rowsTop-hintsHeight)/rowHeight), 1)
 }
 
@@ -286,7 +286,7 @@ func valueLeftOf(page Page) float32 {
 
 // Paint draws the page the menu is on, laid out in screen: its rows, cursor, tabs and hints.
 // What is behind it (the 3DS's night, or the game) is the caller's.
-func (shown *Menu) Paint(drawing *draw2d.List, screen draw2d.Rect, pages []Page, hint string, now float64) {
+func (shown *Menu) Paint(drawing *draw2d.List, screen draw2d.Rectangle, pages []Page, hint string, now float64) {
 	shown.prepare(pages, screen, now)
 	if len(pages) == 0 {
 		return
@@ -296,7 +296,7 @@ func (shown *Menu) Paint(drawing *draw2d.List, screen draw2d.Rect, pages []Page,
 	if unfolded := (now - shown.openedAt) / unfoldSeconds; unfolded < 1 {
 		// The window unfolds from its middle line, as the old handhelds opened theirs.
 		height := max(float32(unfolded)*area.Height, 8)
-		window(drawing, draw2d.Rect{X: area.X, Y: area.Y + (area.Height-height)/2, Width: area.Width, Height: height})
+		window(drawing, draw2d.Rectangle{X: area.X, Y: area.Y + (area.Height-height)/2, Width: area.Width, Height: height})
 		return
 	}
 	window(drawing, area)
@@ -317,9 +317,9 @@ func (shown *Menu) Paint(drawing *draw2d.List, screen draw2d.Rect, pages []Page,
 }
 
 // paintRow draws one row; the chosen one on a band, with the cursor before it.
-func paintRow(drawing *draw2d.List, area draw2d.Rect, page Page, row Row, top float32, chosen bool, now float64) {
+func paintRow(drawing *draw2d.List, area draw2d.Rectangle, page Page, row Row, top float32, chosen bool, now float64) {
 	if chosen {
-		band := draw2d.Rect{X: area.X + frameWidth + 6, Y: top, Width: area.Width - 2*frameWidth - 12, Height: rowHeight - 2}
+		band := draw2d.Rectangle{X: area.X + frameWidth + 6, Y: top, Width: area.Width - 2*frameWidth - 12, Height: rowHeight - 2}
 		pixelart.Stepped(drawing, band, 1, Colours.Chosen)
 		shine(drawing, band, now)
 		cursor(drawing, area.X+12, top+(rowHeight-2-cursorHeight)/2, now)
@@ -350,19 +350,19 @@ func paintRow(drawing *draw2d.List, area draw2d.Rect, page Page, row Row, top fl
 
 // tabPlaces are where the pages' tabs go along the window's top, one after another, the open
 // one wider.
-func tabPlaces(area draw2d.Rect, pages []Page, open int) []draw2d.Rect {
-	places := make([]draw2d.Rect, len(pages))
+func tabPlaces(area draw2d.Rectangle, pages []Page, open int) []draw2d.Rectangle {
+	places := make([]draw2d.Rectangle, len(pages))
 	x := area.X + 8
 	for index, page := range pages {
 		width := tabWidth(page.Title, index == open)
-		places[index] = draw2d.Rect{X: x, Y: area.Y + tabsTop, Width: width, Height: tabHeight}
+		places[index] = draw2d.Rectangle{X: x, Y: area.Y + tabsTop, Width: width, Height: tabHeight}
 		x += width + tabGap
 	}
 	return places
 }
 
 // paintScrollMark draws a small triangle pointing up (-1) or down (1): more rows that way.
-func paintScrollMark(drawing *draw2d.List, area draw2d.Rect, y float32, direction int) {
+func paintScrollMark(drawing *draw2d.List, area draw2d.Rectangle, y float32, direction int) {
 	const halfWidth = 4
 	x := area.X + area.Width - 18
 	for row := range halfWidth {
@@ -371,7 +371,7 @@ func paintScrollMark(drawing *draw2d.List, area draw2d.Rect, y float32, directio
 		if direction > 0 {
 			rowY = y + float32(halfWidth-1-row)
 		}
-		drawing.Rectangle(draw2d.Rect{X: x - width/2, Y: rowY, Width: width, Height: 1}, 0, Colours.Gold, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x - width/2, Y: rowY, Width: width, Height: 1}, 0, Colours.Gold, draw2d.Color{}, 0)
 	}
 }
 

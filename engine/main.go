@@ -54,7 +54,7 @@ func paintOverlay(drawing *draw2d.List, width, height float32) {
 var files embed.FS
 
 func main() {
-	pixelart.UseFonts()
+	engine.SetFonts(pixelart.Fonts())
 	loadPlayer()
 	engine.SetOverlay(paintOverlay)
 	engine.SetInterface(paintInterface)

@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/akrck02/go-engine/engine"
+	viewpoint "github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/draw2d"
-	"github.com/akrck02/go-renderer/models"
 
 	"github.com/jonbul/ships3D-3ds/arena"
 	"github.com/jonbul/ships3D-3ds/match"
@@ -40,7 +40,7 @@ func stage(context *engine.Context) *arena.World {
 }
 
 // look puts the scene's main camera where view is, seeing as wide.
-func look(context *engine.Context, view models.Camera) {
+func look(context *engine.Context, view viewpoint.Camera) {
 	if camera, found := context.Scene.MainCamera(); found {
 		aim(camera, view)
 	}
@@ -69,7 +69,7 @@ func (title *Title) Start(context *engine.Context) {
 func (title *Title) Update(context *engine.Context) {
 	title.now = context.Time
 	darkenSky(context.Scene)
-	var view models.Camera
+	var view viewpoint.Camera
 	title.world.ShowTitle(context.Time, &view)
 	look(context, view)
 	if confirmed(context.Input) || touchInput(context.Input).Pressed&touchscreen.ButtonTouch != 0 {
@@ -121,7 +121,7 @@ func (choice *Modes) Start(context *engine.Context) {
 func (choice *Modes) Update(context *engine.Context) {
 	choice.now = context.Time
 	darkenSky(context.Scene)
-	var view models.Camera
+	var view viewpoint.Camera
 	choice.world.ShowTitle(context.Time, &view)
 	choice.world.HideTitle()
 	look(context, view)

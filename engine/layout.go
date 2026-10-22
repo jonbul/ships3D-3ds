@@ -53,17 +53,17 @@ func screenScale(width, height float32) float32 {
 
 // panelIn is where the menus and the modes are laid out on a screen width × height of the
 // layout's pixels: the whole touch screen on a 3DS, a window in the middle on one screen.
-func panelIn(width, height float32) draw2d.Rect {
+func panelIn(width, height float32) draw2d.Rectangle {
 	if !oneScreen() {
 		return touchscreen.FullScreen
 	}
 	panelWide := min(panelWidth, width-2*panelMargin)
 	panelHigh := min(panelHeight, height-2*panelMargin)
-	return draw2d.Rect{X: (width - panelWide) / 2, Y: (height - panelHigh) / 2, Width: panelWide, Height: panelHigh}
+	return draw2d.Rectangle{X: (width - panelWide) / 2, Y: (height - panelHigh) / 2, Width: panelWide, Height: panelHigh}
 }
 
 // panel is where the menus and the modes are laid out now, as the last frame's window was.
-func panel() draw2d.Rect {
+func panel() draw2d.Rectangle {
 	scale := screenScale(windowWidth, windowHeight)
 	return panelIn(windowWidth/scale, windowHeight/scale)
 }

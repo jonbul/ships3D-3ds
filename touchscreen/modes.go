@@ -80,33 +80,33 @@ const ModeTitle = "GAME MODE"
 const ModeHint = "< > CHOOSE  A OK  B BACK"
 
 // modeArea is where the mode window is: across the screen, in its middle.
-func modeArea(screen draw2d.Rect) draw2d.Rect {
+func modeArea(screen draw2d.Rectangle) draw2d.Rectangle {
 	area := pixelart.Inset(screen, fullPageMargin)
-	return draw2d.Rect{X: area.X, Y: screen.Y + (screen.Height-modeWindowHeight)/2, Width: area.Width, Height: modeWindowHeight}
+	return draw2d.Rectangle{X: area.X, Y: screen.Y + (screen.Height-modeWindowHeight)/2, Width: area.Width, Height: modeWindowHeight}
 }
 
 // modeCard is where the card of the mode at index is, of count, in screen.
-func modeCard(screen draw2d.Rect, index, count int) draw2d.Rect {
+func modeCard(screen draw2d.Rectangle, index, count int) draw2d.Rectangle {
 	area := modeArea(screen)
 	width := (area.Width - 2*modeCardInset - float32(count-1)*modeCardGap) / float32(count)
-	return draw2d.Rect{X: area.X + modeCardInset + float32(index)*(width+modeCardGap), Y: area.Y + modeCardsTop, Width: width, Height: modeWindowHeight - modeCardsTop - modeCardInset}
+	return draw2d.Rectangle{X: area.X + modeCardInset + float32(index)*(width+modeCardGap), Y: area.Y + modeCardsTop, Width: width, Height: modeWindowHeight - modeCardsTop - modeCardInset}
 }
 
 // ModeChoice draws the modes as cards in a window across screen, with the star on the chosen
 // one (its icon in the accent, the others dimmed) and the keys' hint under it. What is behind it
 // is the caller's.
-func ModeChoice(drawing *draw2d.List, measurer draw2d.Measurer, screen draw2d.Rect, modes []Mode, chosen int, hint string, now float64) {
+func ModeChoice(drawing *draw2d.List, measurer draw2d.Measurer, screen draw2d.Rectangle, modes []Mode, chosen int, hint string, now float64) {
 	area := modeArea(screen)
 	window(drawing, area)
-	ribbon := draw2d.Rect{X: area.X + 8, Y: area.Y + tabsTop, Width: tabWidth(ModeTitle, true), Height: tabHeight}
+	ribbon := draw2d.Rectangle{X: area.X + 8, Y: area.Y + tabsTop, Width: tabWidth(ModeTitle, true), Height: tabHeight}
 	tab(drawing, ribbon, ModeTitle, true)
 	for index, mode := range modes {
 		paintModeCard(drawing, measurer, modeCard(screen, index, len(modes)), mode, index == chosen, now)
 	}
-	hints(drawing, draw2d.Rect{X: area.X, Y: area.Y + area.Height + modeHintsBelow, Width: area.Width}, hint)
+	hints(drawing, draw2d.Rectangle{X: area.X, Y: area.Y + area.Height + modeHintsBelow, Width: area.Width}, hint)
 }
 
-func paintModeCard(drawing *draw2d.List, measurer draw2d.Measurer, card draw2d.Rect, mode Mode, chosen bool, now float64) {
+func paintModeCard(drawing *draw2d.List, measurer draw2d.Measurer, card draw2d.Rectangle, mode Mode, chosen bool, now float64) {
 	ink, iconColour := Colours.Soft, Colours.Tab
 	if mode.Open {
 		iconColour = Colours.Soft
@@ -149,7 +149,7 @@ func cardLines(measurer draw2d.Measurer, text string, width float32) []string {
 
 // ModeTouched is the index of the mode whose card a touch at x, y is on, of count laid out in
 // screen, or -1.
-func ModeTouched(screen draw2d.Rect, x, y float32, count int) int {
+func ModeTouched(screen draw2d.Rectangle, x, y float32, count int) int {
 	for index := range count {
 		card := modeCard(screen, index, count)
 		if x >= card.X && x < card.X+card.Width && y >= card.Y && y < card.Y+card.Height {

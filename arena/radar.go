@@ -3,8 +3,8 @@ package arena
 import (
 	"math"
 
+	viewpoint "github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene"
 
 	"github.com/jonbul/ships3D-3ds/flight"
@@ -35,12 +35,12 @@ var (
 	radarEquatorColour  = dimmed(radarLineColour, 0.55)
 	radarNoseColour     = dimmed(radarLineColour, 0.4)
 	radarMeridianColour = dimmed(radarLineColour, 0.18)
-	radarShellColour    = graphics.Vec4{0.078, 0.546, 0.93, 0.07}
-	radarEnemyColour    = graphics.Vec4{1, 0.085, 0.085, 1}   // #ff5252
-	radarFarColour      = graphics.Vec4{0.4, 0.034, 0.034, 1} // #ff5252 at 0.4
-	radarStalkColour    = [3]float32{0.6, 0.152, 0.13}        // #ff8a80 at 0.6
+	radarShellColour    = graphics.Vector{0.078, 0.546, 0.93, 0.07}
+	radarEnemyColour    = graphics.Vector{1, 0.085, 0.085, 1}   // #ff5252
+	radarFarColour      = graphics.Vector{0.4, 0.034, 0.034, 1} // #ff5252 at 0.4
+	radarStalkColour    = [3]float32{0.6, 0.152, 0.13}          // #ff8a80 at 0.6
 	// RadarBackground is the radar's dark, what its screen is cleared to.
-	RadarBackground = graphics.Vec4{0.0044, 0.010, 0.016, 1} // #0e1a22, the touch screen's dark
+	RadarBackground = graphics.Vector{0.0044, 0.010, 0.016, 1} // #0e1a22, the touch screen's dark
 )
 
 // radarFieldOfView is how wide the radar's camera sees, in radians: 40 degrees, a little wider
@@ -48,13 +48,13 @@ var (
 const radarFieldOfView = 40 * math.Pi / 180
 
 // RadarView looks at the sphere from above and behind, as the browser's radar camera does.
-var RadarView = models.Camera{
-	Position:    graphics.Vec4{0, 1.5, -3.4, 1},
-	Target:      graphics.Vec4{0, -0.1, 0, 1},
-	Up:          graphics.Vec4{0, 1, 0, 0},
-	Near:        0.1,
-	Far:         20,
-	FieldOfView: radarFieldOfView,
+var RadarView = viewpoint.Camera{
+	Position:           graphics.Vector{0, 1.5, -3.4, 1},
+	Target:             graphics.Vector{0, -0.1, 0, 1},
+	Up:                 graphics.Vector{0, 1, 0, 0},
+	Near:               0.1,
+	Far:                20,
+	FieldOfViewRadians: radarFieldOfView,
 }
 
 // Radar is the 3D radar's scene and what moves in it.
@@ -71,10 +71,10 @@ func NewRadar() *Radar { return NewRadarIn(scene.New()) }
 func NewRadarIn(sphere *scene.Scene) *Radar {
 	// By day, so nothing is dimmed for the night; the sun straight up, so there is no twilight
 	// glow on the background.
-	sphere.Environment.SunDirection = graphics.Vec4{0, 1, 0, 0}
+	sphere.Environment.SunDirection = graphics.Vector{0, 1, 0, 0}
 	sphere.Environment.SkyZenith, sphere.Environment.SkyHorizon = RadarBackground, RadarBackground
 	sphere.Environment.FogColor = RadarBackground
-	still := func(name string, mesh *scene.Mesh, transform graphics.Mat4) {
+	still := func(name string, mesh *scene.Mesh, transform graphics.Matrix) {
 		sphere.Nodes = append(sphere.Nodes, &scene.Node{Name: name, Transform: transform, Mesh: mesh})
 	}
 	still("shell", shell(), graphics.Identity())
@@ -112,9 +112,9 @@ func (shown3D *Radar) Show(blips map[string]radar.Blip) {
 			blip.Mesh.Material.BaseColor = radarFarColour
 		}
 		blip.Hidden, stalk.Hidden = false, math.Abs(y) < radarBlipSize
-		blip.Transform = graphics.Translate(graphics.Vec4{float32(x), float32(y), float32(z), 0})
-		stalk.Transform = graphics.Translate(graphics.Vec4{float32(x), float32(y / 2), float32(z), 0}).
-			Multiply(graphics.Scale(graphics.Vec4{1, float32(math.Abs(y)), 1, 0}))
+		blip.Transform = graphics.Translate(graphics.Vector{float32(x), float32(y), float32(z), 0})
+		stalk.Transform = graphics.Translate(graphics.Vector{float32(x), float32(y / 2), float32(z), 0}).
+			Multiply(graphics.Scale(graphics.Vector{1, float32(math.Abs(y)), 1, 0}))
 		drawn++
 	}
 	for index := drawn; index < len(shown3D.blips); index++ {
@@ -138,7 +138,7 @@ func dimmed(colour [3]float32, share float32) [3]float32 {
 // solid is a mesh drawn in its own flat colours, without light: the radar is a screen, not a
 // lit object.
 func solid(mesh *scene.Mesh) *scene.Mesh {
-	mesh.Material = &scene.Material{Name: "radar", Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}}
+	mesh.Material = &scene.Material{Name: "radar", Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}}
 	return mesh
 }
 

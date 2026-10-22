@@ -21,17 +21,17 @@ const (
 
 // Stepped fills area with its corners cut in a staircase of steps steps: one rectangle a step,
 // the widest in the middle.
-func Stepped(drawing *draw2d.List, area draw2d.Rect, steps int, colour draw2d.Color) {
+func Stepped(drawing *draw2d.List, area draw2d.Rectangle, steps int, colour draw2d.Color) {
 	for step := range steps + 1 {
 		inset := float32((steps - step) * CornerStep)
 		height := float32(step * CornerStep)
-		drawing.Rectangle(draw2d.Rect{X: area.X + height, Y: area.Y + inset, Width: area.Width - 2*height, Height: area.Height - 2*inset}, 0, colour, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: area.X + height, Y: area.Y + inset, Width: area.Width - 2*height, Height: area.Height - 2*inset}, 0, colour, draw2d.Color{}, 0)
 	}
 }
 
 // Inset is area shrunk by a margin on every side.
-func Inset(area draw2d.Rect, margin float32) draw2d.Rect {
-	return draw2d.Rect{X: area.X + margin, Y: area.Y + margin, Width: area.Width - 2*margin, Height: area.Height - 2*margin}
+func Inset(area draw2d.Rectangle, margin float32) draw2d.Rectangle {
+	return draw2d.Rectangle{X: area.X + margin, Y: area.Y + margin, Width: area.Width - 2*margin, Height: area.Height - 2*margin}
 }
 
 // Shown tells whether something that blinks blinksASecond times a second shows at now: it shows
@@ -53,7 +53,7 @@ func PaintedBitmap(drawing *draw2d.List, rows []string, x, y, size float32, pale
 			for end < len(line) && line[end] == line[column] {
 				end++
 			}
-			drawing.Rectangle(draw2d.Rect{X: x + float32(column)*size, Y: y + float32(row)*size, Width: float32(end-column) * size, Height: size}, 0, colour, draw2d.Color{}, 0)
+			drawing.Rectangle(draw2d.Rectangle{X: x + float32(column)*size, Y: y + float32(row)*size, Width: float32(end-column) * size, Height: size}, 0, colour, draw2d.Color{}, 0)
 			column = end - 1
 		}
 	}
@@ -86,6 +86,6 @@ func Move(drawing *draw2d.List, start int, x, y float32) {
 	}
 }
 
-func scaled(area draw2d.Rect, factor float32) draw2d.Rect {
-	return draw2d.Rect{X: area.X * factor, Y: area.Y * factor, Width: area.Width * factor, Height: area.Height * factor}
+func scaled(area draw2d.Rectangle, factor float32) draw2d.Rectangle {
+	return draw2d.Rectangle{X: area.X * factor, Y: area.Y * factor, Width: area.Width * factor, Height: area.Height * factor}
 }

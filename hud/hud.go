@@ -66,9 +66,9 @@ var copilotFace = []string{
 
 // copilotPalette are the copilot's colours, by letter.
 var copilotPalette = map[byte]draw2d.Color{
-	'#': draw2d.Hex("#dfe9f8"), '=': draw2d.Hex("#9cb4d6"), '-': draw2d.Hex("#16233f"),
-	'o': draw2d.Hex("#5ee0ff"), '*': draw2d.Hex("#ffffff"), 'p': draw2d.Hex("#ff8fb8"),
-	's': draw2d.Hex("#5ee0ff"), 'a': draw2d.Hex("#ff8fb8"),
+	'#': draw2d.MustHex("#dfe9f8"), '=': draw2d.MustHex("#9cb4d6"), '-': draw2d.MustHex("#16233f"),
+	'o': draw2d.MustHex("#5ee0ff"), '*': draw2d.MustHex("#ffffff"), 'p': draw2d.MustHex("#ff8fb8"),
+	's': draw2d.MustHex("#5ee0ff"), 'a': draw2d.MustHex("#ff8fb8"),
 }
 
 // lifeHeart is the bar's heart, and its colours.
@@ -81,21 +81,21 @@ var (
 		"..###..",
 		"...#...",
 	}
-	heartPalette = map[byte]draw2d.Color{'#': draw2d.Hex("#ff6f91"), '*': draw2d.Hex("#ffd6e0")}
+	heartPalette = map[byte]draw2d.Color{'#': draw2d.MustHex("#ff6f91"), '*': draw2d.MustHex("#ffd6e0")}
 )
 
 // The life bar's cells run from a light blue to a deep one; low, they are red.
 var (
-	lifeCells    = [2]draw2d.Color{draw2d.Hex("#7fe8ff"), draw2d.Hex("#3d8fe0")}
-	lifeCellsLow = [2]draw2d.Color{draw2d.Hex("#ff9aa8"), draw2d.Hex("#e0405a")}
+	lifeCells    = [2]draw2d.Color{draw2d.MustHex("#7fe8ff"), draw2d.MustHex("#3d8fe0")}
+	lifeCellsLow = [2]draw2d.Color{draw2d.MustHex("#ff9aa8"), draw2d.MustHex("#e0405a")}
 )
 
 // hudColours are the readings' colours: the spent charges, the boxes and their shine.
 var hudColours = struct {
 	spent, box, edge, ink, shadow, shine draw2d.Color
 }{
-	spent: draw2d.Hex("#1c2a48"), box: draw2d.Hex("#0e1c42e0"), edge: draw2d.Hex("#9cc8f2"),
-	ink: draw2d.Hex("#eaf4ff"), shadow: draw2d.Hex("#02060fa0"), shine: draw2d.Hex("#ffffff70"),
+	spent: draw2d.MustHex("#1c2a48"), box: draw2d.MustHex("#0e1c42e0"), edge: draw2d.MustHex("#9cc8f2"),
+	ink: draw2d.MustHex("#eaf4ff"), shadow: draw2d.MustHex("#02060fa0"), shine: draw2d.MustHex("#ffffff70"),
 }
 
 // The assault's readings at the top right: the mothership's life as a bar under its name, and
@@ -112,7 +112,7 @@ const (
 )
 
 // roundColours are the mothership's bar: its life, warm as a target's.
-var roundColours = [2]draw2d.Color{draw2d.Hex("#ffd36f"), draw2d.Hex("#e0602d")}
+var roundColours = [2]draw2d.Color{draw2d.MustHex("#ffd36f"), draw2d.MustHex("#e0602d")}
 
 // Paint lays the readings out in drawing for this frame, which it empties first, over a view of
 // width × height pixels.
@@ -147,7 +147,7 @@ func paintLife(drawing *draw2d.List, life, most, now float64) {
 		cells = lifeCellsLow
 	}
 	width := float32(lifeHeartRoom + segments*(lifeSegmentWidth+lifeSegmentGap) + lifeSegmentGap + 2)
-	frame := draw2d.Rect{X: lifeLeft, Y: lifeTop, Width: width, Height: lifeSegmentHeight + 8}
+	frame := draw2d.Rectangle{X: lifeLeft, Y: lifeTop, Width: width, Height: lifeSegmentHeight + 8}
 	shadow := frame
 	shadow.X, shadow.Y = shadow.X+hudShadowDrop, shadow.Y+hudShadowDrop
 	pixelart.Stepped(drawing, shadow, 2, hudColours.shadow)
@@ -162,15 +162,15 @@ func paintLife(drawing *draw2d.List, life, most, now float64) {
 	top := frame.Y + 4
 	for segment := range segments {
 		x := left + float32(segment*(lifeSegmentWidth+lifeSegmentGap))
-		drawing.Rectangle(draw2d.Rect{X: x, Y: top, Width: lifeSegmentWidth, Height: lifeSegmentHeight}, 0, hudColours.spent, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x, Y: top, Width: lifeSegmentWidth, Height: lifeSegmentHeight}, 0, hudColours.spent, draw2d.Color{}, 0)
 		filled := min(max(share*float64(segments)-float64(segment), 0), 1)
 		if filled == 0 {
 			continue
 		}
 		colour := mixColours(cells[0], cells[1], float32(segment)/float32(max(segments-1, 1)))
 		fill := float32(filled) * lifeSegmentWidth
-		drawing.Rectangle(draw2d.Rect{X: x, Y: top, Width: fill, Height: lifeSegmentHeight}, 0, colour, draw2d.Color{}, 0)
-		drawing.Rectangle(draw2d.Rect{X: x, Y: top, Width: fill, Height: 2}, 0, hudColours.shine, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x, Y: top, Width: fill, Height: lifeSegmentHeight}, 0, colour, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x, Y: top, Width: fill, Height: 2}, 0, hudColours.shine, draw2d.Color{}, 0)
 	}
 }
 
@@ -185,7 +185,7 @@ func mixColours(first, second draw2d.Color, share float32) draw2d.Color {
 
 // paintCopilot draws the copilot's face and words in a box along the bottom; the words blink.
 func paintCopilot(drawing *draw2d.List, words string, now float64, width, height float32) {
-	box := draw2d.Rect{X: copilotMargin, Y: height - copilotMargin - copilotHeight, Width: width - 2*copilotMargin, Height: copilotHeight}
+	box := draw2d.Rectangle{X: copilotMargin, Y: height - copilotMargin - copilotHeight, Width: width - 2*copilotMargin, Height: copilotHeight}
 	shadow := box
 	shadow.X, shadow.Y = shadow.X+hudShadowDrop, shadow.Y+hudShadowDrop
 	pixelart.Stepped(drawing, shadow, 2, hudColours.shadow)
@@ -200,7 +200,7 @@ func paintCopilot(drawing *draw2d.List, words string, now float64, width, height
 
 // paintRound draws the mothership's life and the round's time left, at the top right.
 func paintRound(drawing *draw2d.List, round *game.Round, now float64, width float32) {
-	frame := draw2d.Rect{X: width - roundRight - roundBarWidth - 8, Y: roundTop, Width: roundBarWidth + 8, Height: roundLabelRoom + roundBarHeight + roundTimeRoom + 6}
+	frame := draw2d.Rectangle{X: width - roundRight - roundBarWidth - 8, Y: roundTop, Width: roundBarWidth + 8, Height: roundLabelRoom + roundBarHeight + roundTimeRoom + 6}
 	shadow := frame
 	shadow.X, shadow.Y = shadow.X+hudShadowDrop, shadow.Y+hudShadowDrop
 	pixelart.Stepped(drawing, shadow, 2, hudColours.shadow)
@@ -208,7 +208,7 @@ func paintRound(drawing *draw2d.List, round *game.Round, now float64, width floa
 	pixelart.Stepped(drawing, pixelart.Inset(frame, 2), 2, hudColours.box)
 	left := frame.X + roundLabelInset
 	drawing.Text("MOTHERSHIP", left, frame.Y+roundLabelRoom, pixelart.LabelSize, draw2d.Mono, hudColours.ink)
-	bar := draw2d.Rect{X: left, Y: frame.Y + roundLabelRoom + 3, Width: roundBarWidth, Height: roundBarHeight}
+	bar := draw2d.Rectangle{X: left, Y: frame.Y + roundLabelRoom + 3, Width: roundBarWidth, Height: roundBarHeight}
 	drawing.Rectangle(bar, 0, hudColours.spent, draw2d.Color{}, 0)
 	share := float32(0)
 	if round.Mothership.MaxLife > 0 {
@@ -217,7 +217,7 @@ func paintRound(drawing *draw2d.List, round *game.Round, now float64, width floa
 	lit := bar
 	lit.Width *= share
 	drawing.Rectangle(lit, 0, mixColours(roundColours[1], roundColours[0], share), draw2d.Color{}, 0)
-	drawing.Rectangle(draw2d.Rect{X: lit.X, Y: lit.Y, Width: lit.Width, Height: 2}, 0, hudColours.shine, draw2d.Color{}, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: lit.X, Y: lit.Y, Width: lit.Width, Height: 2}, 0, hudColours.shine, draw2d.Color{}, 0)
 	drawing.Text(clock(round.EndsAt-now)+" LEFT", left, bar.Y+roundBarHeight+roundTimeRoom-4, pixelart.TextSize, draw2d.Regular, hudColours.ink)
 }
 

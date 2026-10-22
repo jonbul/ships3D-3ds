@@ -28,7 +28,7 @@ type forceField struct {
 }
 
 func newForceField(space *scene.Scene) *forceField {
-	material := &scene.Material{Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}, Transparent: true, DoubleSided: true}
+	material := &scene.Material{Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}, Transparent: true, DoubleSided: true}
 	field := &forceField{face: &scene.Node{Name: "force field", Hidden: true, Moving: true, Transform: graphics.Identity(),
 		Mesh: &scene.Mesh{Name: "force field", Material: material}}}
 	space.Nodes = append(space.Nodes, field.face)
@@ -47,7 +47,7 @@ func (field *forceField) show(state *game.Game, triangles [][3]flight.Vector) {
 		fillFace(field.face.Mesh, nearest)
 	}
 	opacity := float32(nearness * fieldMostOpacity)
-	field.face.Mesh.Material.BaseColor = graphics.Vec4{1, 1, 1, opacity}
+	field.face.Mesh.Material.BaseColor = graphics.Vector{1, 1, 1, opacity}
 }
 
 // fillFace lays a face out just inside the edge, its middle brighter than its corners.

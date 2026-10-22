@@ -3,7 +3,7 @@ package arena
 import (
 	"testing"
 
-	"github.com/akrck02/go-renderer/models"
+	viewpoint "github.com/akrck02/go-renderer/camera"
 
 	"github.com/jonbul/ships3D-3ds/chase"
 	"github.com/jonbul/ships3D-3ds/flight"
@@ -13,11 +13,11 @@ import (
 
 func TestTheMatchSeesAsWideAsTheChaseCameraAfterTheTitle(test *testing.T) {
 	world := NewWorld()
-	var view models.Camera
+	var view viewpoint.Camera
 	world.ShowTitle(0, &view)
 	world.Show(game.New(), nil, &view, 0, 0)
-	if view.FieldOfView != chase.FieldOfView {
-		test.Errorf("the match sees %v radians across, want the chase camera's %v", view.FieldOfView, chase.FieldOfView)
+	if view.FieldOfViewRadians != chase.FieldOfView {
+		test.Errorf("the match sees %v radians across, want the chase camera's %v", view.FieldOfViewRadians, chase.FieldOfView)
 	}
 }
 
@@ -41,7 +41,7 @@ func assaultRound() *game.Game {
 
 func TestTheMothershipIsBuiltFromItsDesign(test *testing.T) {
 	world := NewWorld()
-	var view models.Camera
+	var view viewpoint.Camera
 	world.Show(assaultRound(), nil, &view, 0, 0)
 	if world.mothership.Hidden || world.mothership.Mesh == nil || len(world.mothership.Mesh.Positions) == 0 {
 		test.Fatalf("the mothership is hidden %v with mesh %v", world.mothership.Hidden, world.mothership.Mesh)
@@ -54,7 +54,7 @@ func TestTheMothershipIsBuiltFromItsDesign(test *testing.T) {
 
 func TestAGunnerIsATurretOnTheHull(test *testing.T) {
 	world := NewWorld()
-	var view models.Camera
+	var view viewpoint.Camera
 	world.Show(assaultRound(), nil, &view, 0, 0)
 	node := world.remotes["them"]
 	if node == nil || node.Hidden || node.Mesh != world.turret {

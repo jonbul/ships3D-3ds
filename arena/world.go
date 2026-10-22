@@ -1,8 +1,8 @@
 package arena
 
 import (
+	viewpoint "github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene"
 
 	"github.com/jonbul/ships3D-3ds/chase"
@@ -125,13 +125,13 @@ func NewWorldIn(space *scene.Scene) *World {
 }
 
 // show places everything where the game says, and the camera behind our ship.
-func (world *World) Show(state *game.Game, events []game.Event, view *models.Camera, seconds, now float64) {
+func (world *World) Show(state *game.Game, events []game.Event, view *viewpoint.Camera, seconds, now float64) {
 	world.title.Hidden = true
 	world.now = now
-	view.FieldOfView = chase.FieldOfView // the title sees narrower, through the same view
+	view.FieldOfViewRadians = chase.FieldOfView // the title sees narrower, through the same view
 	world.showMothership(state)
 	if !state.Welcomed {
-		view.Position, view.Target, view.Up = graphics.Vec4{0, 20, -60, 1}, graphics.Vec4{0, 0, 0, 1}, graphics.Vec4{0, 1, 0, 0}
+		view.Position, view.Target, view.Up = graphics.Vector{0, 20, -60, 1}, graphics.Vector{0, 0, 0, 1}, graphics.Vector{0, 1, 0, 0}
 		return
 	}
 	scale := state.Player.Scale
@@ -165,10 +165,10 @@ func (world *World) Show(state *game.Game, events []game.Event, view *models.Cam
 // the game has said how large the world is.
 func (world *World) placeSpace(state *game.Game) {
 	eye := world.view.Eye
-	world.sky.Transform = graphics.Translate(graphics.Vec4{float32(eye[0]), float32(eye[1]), float32(eye[2]), 0})
+	world.sky.Transform = graphics.Translate(graphics.Vector{float32(eye[0]), float32(eye[1]), float32(eye[2]), 0})
 	if world.skyScale > 0 {
 		scale := float32(world.skyScale)
-		world.sky.Transform = world.sky.Transform.Multiply(graphics.Scale(graphics.Vec4{scale, scale, scale, 0}))
+		world.sky.Transform = world.sky.Transform.Multiply(graphics.Scale(graphics.Vector{scale, scale, scale, 0}))
 	}
 	dustCellsAround(world.dust, state.Own.Position)
 	if world.edges == nil && state.Settings.WorldRadius > 0 {
@@ -294,7 +294,7 @@ func (world *World) showBullets(state *game.Game) {
 	}
 }
 
-func (world *World) placeCamera(state *game.Game, view *models.Camera, seconds float64) {
+func (world *World) placeCamera(state *game.Game, view *viewpoint.Camera, seconds float64) {
 	if state.Round != nil && state.Round.Seat != nil {
 		world.look(gunnerView(state), view)
 		return
@@ -317,7 +317,7 @@ func (world *World) placeCamera(state *game.Game, view *models.Camera, seconds f
 }
 
 // look sees the world from seen.
-func (world *World) look(seen chase.View, view *models.Camera) {
+func (world *World) look(seen chase.View, view *viewpoint.Camera) {
 	world.view = seen
 	view.Position = vectorOf(seen.Eye, 1)
 	view.Target = vectorOf(seen.Target, 1)
@@ -337,7 +337,7 @@ func (world *World) placeReticle(state *game.Game) {
 
 // reticle is a cross with a gap in the middle, drawn in the plane facing the ship.
 func reticle() *scene.Mesh {
-	mesh := &scene.Mesh{Name: "reticle", Material: &scene.Material{Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}}}
+	mesh := &scene.Mesh{Name: "reticle", Material: &scene.Material{Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}}}
 	const arm, thickness, gap float32 = 2.5, 0.35, 1.2
 	offset := gap + arm/2
 	for _, centre := range [4][3]float32{{offset, 0, 0}, {-offset, 0, 0}, {0, offset, 0}, {0, -offset, 0}} {
@@ -350,20 +350,20 @@ func reticle() *scene.Mesh {
 	return mesh
 }
 
-func vectorOf(vector flight.Vector, w float32) graphics.Vec4 {
-	return graphics.Vec4{float32(vector[0]), float32(vector[1]), float32(vector[2]), w}
+func vectorOf(vector flight.Vector, w float32) graphics.Vector {
+	return graphics.Vector{float32(vector[0]), float32(vector[1]), float32(vector[2]), w}
 }
 
-func TransformOf(position flight.Vector, rotation flight.Rotation, scale float64) graphics.Mat4 {
+func TransformOf(position flight.Vector, rotation flight.Rotation, scale float64) graphics.Matrix {
 	return graphics.FromTranslationRotationScale(
-		graphics.Vec4{float32(position[0]), float32(position[1]), float32(position[2]), 1},
-		graphics.Vec4{float32(rotation[0]), float32(rotation[1]), float32(rotation[2]), float32(rotation[3])},
-		graphics.Vec4{float32(scale), float32(scale), float32(scale), 0},
+		graphics.Vector{float32(position[0]), float32(position[1]), float32(position[2]), 1},
+		graphics.Vector{float32(rotation[0]), float32(rotation[1]), float32(rotation[2]), float32(rotation[3])},
+		graphics.Vector{float32(scale), float32(scale), float32(scale), 0},
 	)
 }
 
 func Box(name string, width, height, depth float32, colour [3]float32) *scene.Mesh {
-	mesh := &scene.Mesh{Name: name, Material: &scene.Material{Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}}}
+	mesh := &scene.Mesh{Name: name, Material: &scene.Material{Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}}}
 	AppendBox(mesh, [3]float32{}, width, height, depth, colour)
 	return mesh
 }

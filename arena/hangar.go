@@ -3,8 +3,8 @@ package arena
 import (
 	"math"
 
+	viewpoint "github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene"
 
 	"github.com/jonbul/ships3D-3ds/flight"
@@ -49,7 +49,7 @@ var (
 	hangarPlanet = "#6a4fb0"
 	hangarBeam   = [3]float32{0.45, 0.7, 1.0}
 	// HangarBack is the far dark around the hangar, what the screen is cleared to.
-	HangarBack  = graphics.Vec4{0.002, 0.004, 0.012, 1} // space, what the screen is cleared to
+	HangarBack  = graphics.Vector{0.002, 0.004, 0.012, 1} // space, what the screen is cleared to
 	planetPlace = flight.Vector{-70, -20, 200}
 )
 
@@ -57,10 +57,10 @@ var (
 // from above, where a design shows best: its top, its cockpit and its wings, rather than its belly.
 var (
 	HangarShipPlace = flight.Vector{0, 0, 22}
-	HangarCamera    = models.Camera{
-		Position: graphics.Vec4{0, 7, -3, 1},
-		Target:   graphics.Vec4{0, 1, 22, 1},
-		Up:       graphics.Vec4{0, 1, 0, 0},
+	HangarCamera    = viewpoint.Camera{
+		Position: graphics.Vector{0, 7, -3, 1},
+		Target:   graphics.Vector{0, 1, 22, 1},
+		Up:       graphics.Vector{0, 1, 0, 0},
 		Near:     1, Far: 400,
 	}
 )
@@ -83,7 +83,7 @@ type spotlight struct {
 func NewHangar() *Hangar {
 	built := &Hangar{}
 	shrink := float32(previewSkyRadius) / SkyRadius
-	stars := &scene.Node{Name: "stars", Mesh: Stars(), Transform: graphics.Scale(graphics.Vec4{shrink, shrink, shrink, 0})}
+	stars := &scene.Node{Name: "stars", Mesh: Stars(), Transform: graphics.Scale(graphics.Vector{shrink, shrink, shrink, 0})}
 	still := &scene.Node{Name: "hangar", Transform: graphics.Identity(), Mesh: ship.Build([]protocol.Layer{{Visible: true, Parts: hangarParts()}}, ship.Fine)}
 	built.Nodes = append(built.Nodes, stars, still)
 	beam := beamMesh()
@@ -136,7 +136,7 @@ func (built *Hangar) Show(now float64) {
 // beamMesh is a spotlight's beam, standing up from its foot: slices that widen and fade as they
 // rise, so the light seems to spread into the dark.
 func beamMesh() *scene.Mesh {
-	mesh := &scene.Mesh{Name: "beam", Material: &scene.Material{Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}, Transparent: true, DoubleSided: true}}
+	mesh := &scene.Mesh{Name: "beam", Material: &scene.Material{Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}, Transparent: true, DoubleSided: true}}
 	sliceHeight := float32(beamHeight) / beamSlices
 	for slice := range beamSlices {
 		share := (float32(slice) + 0.5) / beamSlices

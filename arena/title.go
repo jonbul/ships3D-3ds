@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"math"
 
+	viewpoint "github.com/akrck02/go-renderer/camera"
 	"github.com/akrck02/go-renderer/graphics"
-	"github.com/akrck02/go-renderer/models"
 	"github.com/akrck02/go-renderer/scene"
 
 	"github.com/jonbul/ships3D-3ds/flight"
@@ -32,13 +32,13 @@ const (
 )
 
 // titleCamera looks straight ahead, +Z, from the origin.
-var titleCamera = models.Camera{
-	Position:    graphics.Vec4{0, 0, 0, 1},
-	Target:      graphics.Vec4{0, 0, 1, 1},
-	Up:          graphics.Vec4{0, 1, 0, 0},
-	Near:        CameraNear,
-	Far:         CameraFar,
-	FieldOfView: math.Pi / 4,
+var titleCamera = viewpoint.Camera{
+	Position:           graphics.Vector{0, 0, 0, 1},
+	Target:             graphics.Vector{0, 0, 1, 1},
+	Up:                 graphics.Vector{0, 1, 0, 0},
+	Near:               CameraNear,
+	Far:                CameraFar,
+	FieldOfViewRadians: math.Pi / 4,
 }
 
 // titleShip builds the title's ship node, hidden until the title shows.
@@ -51,7 +51,7 @@ func titleShip() *scene.Node {
 }
 
 // showTitle flies the title's ship at now seconds and places the still camera.
-func (world *World) ShowTitle(now float64, view *models.Camera) {
+func (world *World) ShowTitle(now float64, view *viewpoint.Camera) {
 	*view = titleCamera
 	world.view.Eye, world.view.Target = flight.Vector{}, flight.Forward
 	share := math.Mod(now, titleLoopSeconds) / titleLoopSeconds

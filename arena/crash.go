@@ -114,7 +114,7 @@ func (effects *crash) showSparks(state *game.Game, now, seconds float64) {
 		node.Transform = graphics.Translate(vectorOf(position, 0))
 	}
 	if len(effects.sparks) > 0 {
-		effects.sparks[0].Mesh.Material.BaseColor = graphics.Vec4{float32(fade), float32(fade), float32(fade), 1}
+		effects.sparks[0].Mesh.Material.BaseColor = graphics.Vector{float32(fade), float32(fade), float32(fade), 1}
 	}
 }
 

@@ -9,19 +9,19 @@ import (
 // blue for what is chosen, the pixel fonts' sizes, square corners and hard shadows.
 func Theme(base ui.Theme) ui.Theme {
 	theme := base
-	theme.Background = draw2d.Hex("#0a1430")
-	theme.Surface = draw2d.Hex("#12224a")
-	theme.Sunken = draw2d.Hex("#1a2d5c")
-	theme.Line = draw2d.Hex("#3a5590")
-	theme.ControlLine = draw2d.Hex("#9cc8f2")
-	theme.Ink = draw2d.Hex("#eaf4ff")
-	theme.InkSoft = draw2d.Hex("#a9bedd")
-	theme.InkQuiet = draw2d.Hex("#7f93b8")
-	theme.Primary = draw2d.Hex("#5fb0ff")
-	theme.OnPrimary = draw2d.Hex("#02060f")
-	theme.PrimaryTint = draw2d.Hex("#2a4a80")
-	theme.FocusRing = draw2d.Hex("#5fb0ff80")
-	theme.Shadow = draw2d.Hex("#02060f")
+	theme.Background = draw2d.MustHex("#0a1430")
+	theme.Surface = draw2d.MustHex("#12224a")
+	theme.Sunken = draw2d.MustHex("#1a2d5c")
+	theme.Line = draw2d.MustHex("#3a5590")
+	theme.ControlLine = draw2d.MustHex("#9cc8f2")
+	theme.Ink = draw2d.MustHex("#eaf4ff")
+	theme.InkSoft = draw2d.MustHex("#a9bedd")
+	theme.InkQuiet = draw2d.MustHex("#7f93b8")
+	theme.Primary = draw2d.MustHex("#5fb0ff")
+	theme.OnPrimary = draw2d.MustHex("#02060f")
+	theme.PrimaryTint = draw2d.MustHex("#2a4a80")
+	theme.FocusRing = draw2d.MustHex("#5fb0ff80")
+	theme.Shadow = draw2d.MustHex("#02060f")
 	theme.TextSize = TextSize
 	theme.SmallTextSize = TextSize
 	theme.HeadingSize = TextSize

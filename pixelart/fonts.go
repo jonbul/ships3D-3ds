@@ -18,9 +18,8 @@ var (
 	pressStart []byte
 )
 
-// UseFonts makes every text draw in the pixel fonts: VT323 as the regular and medium weight,
-// Silkscreen as the bold, Press Start 2P as the mono. Call it before the first painter is made,
-// which reads them.
-func UseFonts() {
-	overlay.UseFonts(overlay.Fonts{Regular: vt323, Medium: vt323, Bold: silkscreenBold, Mono: pressStart})
+// Fonts are the pixel fonts by weight, for the window to draw every text in: VT323 as the regular
+// and medium weight, Silkscreen as the bold, Press Start 2P as the mono.
+func Fonts() overlay.Fonts {
+	return overlay.Fonts{Regular: vt323, Medium: vt323, Bold: silkscreenBold, Mono: pressStart}
 }

@@ -31,15 +31,15 @@ const (
 )
 
 var (
-	mapRing         = draw2d.Hex("#2c4a5a")
-	mapRingFaint    = draw2d.Hex("#1d323d")
-	mapOwn          = draw2d.Hex("#4fc3f7")
-	mapEnemy        = draw2d.Hex("#ff5252")
-	mapEnemyFar     = draw2d.Hex("#8a3434")
-	mapSweep        = draw2d.Hex("#4fc3f7")
-	mapHit          = draw2d.Hex("#ff5252")
+	mapRing         = draw2d.MustHex("#2c4a5a")
+	mapRingFaint    = draw2d.MustHex("#1d323d")
+	mapOwn          = draw2d.MustHex("#4fc3f7")
+	mapEnemy        = draw2d.MustHex("#ff5252")
+	mapEnemyFar     = draw2d.MustHex("#8a3434")
+	mapSweep        = draw2d.MustHex("#4fc3f7")
+	mapHit          = draw2d.MustHex("#ff5252")
 	sweepTrail      = []float32{0.9, 0.45, 0.2}
-	mapLabel        = draw2d.Hex("#9fb3c0")
+	mapLabel        = draw2d.MustHex("#9fb3c0")
 	mapTransparent  = draw2d.Color{}
 	mapCircleRadius = float32(1 << 10) // rounding larger than the shape makes a circle
 )
@@ -56,7 +56,7 @@ type Radar struct {
 
 // PaintRadar draws the radar over area at now seconds: the flat map, when it is flat, and the
 // readings around it either way.
-func PaintRadar(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) {
+func PaintRadar(drawing *draw2d.List, area draw2d.Rectangle, shown Radar, now float64) {
 	if shown.Flat {
 		PaintMap(drawing, area, shown, now)
 	}
@@ -65,17 +65,17 @@ func PaintRadar(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64
 
 // PaintMap draws the flat map in area at now seconds: its rings, the sweep, the ships it saw with
 // their stalks, and our ship in the middle.
-func PaintMap(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) {
+func PaintMap(drawing *draw2d.List, area draw2d.Rectangle, shown Radar, now float64) {
 	state := shown.State
 	radius := min(area.Width, area.Height)/2 - mapMargin
 	centreX, centreY := area.X+area.Width/2, area.Y+area.Height/2
 	circle := func(x, y, size float32, fill, border draw2d.Color, borderWidth float32) {
-		drawing.Rectangle(draw2d.Rect{X: x - size/2, Y: y - size/2, Width: size, Height: size}, mapCircleRadius, fill, border, borderWidth)
+		drawing.Rectangle(draw2d.Rectangle{X: x - size/2, Y: y - size/2, Width: size, Height: size}, mapCircleRadius, fill, border, borderWidth)
 	}
 	circle(centreX, centreY, radius*2, mapTransparent, mapRing, ringWidth)
 	circle(centreX, centreY, radius, mapTransparent, mapRingFaint, ringWidth)
-	drawing.Rectangle(draw2d.Rect{X: centreX - ringWidth/2, Y: centreY - radius, Width: ringWidth, Height: radius * 2}, 0, mapRingFaint, mapTransparent, 0)
-	drawing.Rectangle(draw2d.Rect{X: centreX - radius, Y: centreY - ringWidth/2, Width: radius * 2, Height: ringWidth}, 0, mapRingFaint, mapTransparent, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: centreX - ringWidth/2, Y: centreY - radius, Width: ringWidth, Height: radius * 2}, 0, mapRingFaint, mapTransparent, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: centreX - radius, Y: centreY - ringWidth/2, Width: radius * 2, Height: ringWidth}, 0, mapRingFaint, mapTransparent, 0)
 
 	toScreen := func(blip radar.Blip) (x, y, top float32) {
 		x = centreX + float32(blip.Right)*radius
@@ -92,7 +92,7 @@ func PaintMap(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) 
 		colour[3] *= float32(echo.Brightness(now))
 		// A stalk from the map's plane up (or down) to the ship, as in the browser: above and
 		// below read at a glance.
-		drawing.Rectangle(draw2d.Rect{X: x - stalkWidth/2, Y: min(y, top), Width: stalkWidth, Height: abs(top - y)}, 0, colour, mapTransparent, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: x - stalkWidth/2, Y: min(y, top), Width: stalkWidth, Height: abs(top - y)}, 0, colour, mapTransparent, 0)
 		circle(x, top, blipSize, colour, mapTransparent, 0)
 	}
 	if state.Alive {
@@ -102,7 +102,7 @@ func PaintMap(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) 
 
 // paintReadings draws what both radars show around the dish: the speed, a hit's flash, life,
 // score, the range and how to open the options.
-func paintReadings(drawing *draw2d.List, area draw2d.Rect, shown Radar, now float64) {
+func paintReadings(drawing *draw2d.List, area draw2d.Rectangle, shown Radar, now float64) {
 	state := shown.State
 	PaintSpeed(drawing, area, state)
 	PaintHit(drawing, area, state, now)
@@ -118,7 +118,7 @@ func paintReadings(drawing *draw2d.List, area draw2d.Rect, shown Radar, now floa
 }
 
 // PaintHit flashes area's edge red, fading, just after we were hit.
-func PaintHit(drawing *draw2d.List, area draw2d.Rect, state *game.Game, now float64) {
+func PaintHit(drawing *draw2d.List, area draw2d.Rectangle, state *game.Game, now float64) {
 	if now-state.HitAt >= hitFlashSeconds || state.HitAt <= 0 {
 		return
 	}
@@ -158,14 +158,14 @@ func paintSweep(drawing *draw2d.List, centreX, centreY, radius float32, now floa
 		colour[3] *= brightness
 		for dot := 1; dot <= sweepDots; dot++ {
 			share := float32(dot) / sweepDots
-			drawing.Rectangle(draw2d.Rect{X: centreX + right*radius*share - sweepDotSize/2, Y: centreY - ahead*radius*share - sweepDotSize/2, Width: sweepDotSize, Height: sweepDotSize}, 0, colour, mapTransparent, 0)
+			drawing.Rectangle(draw2d.Rectangle{X: centreX + right*radius*share - sweepDotSize/2, Y: centreY - ahead*radius*share - sweepDotSize/2, Width: sweepDotSize, Height: sweepDotSize}, 0, colour, mapTransparent, 0)
 		}
 	}
 }
 
 // PaintSpeed draws our speed as a bar up area's right edge: empty at the slowest reverse, full
 // at the fastest, with a mark where the ship stands still.
-func PaintSpeed(drawing *draw2d.List, area draw2d.Rect, state *game.Game) {
+func PaintSpeed(drawing *draw2d.List, area draw2d.Rectangle, state *game.Game) {
 	speed, slowest, fastest := state.Own.Speed, state.Settings.MinSpeed, state.Settings.MaxSpeed
 	if fastest <= slowest {
 		return
@@ -175,9 +175,9 @@ func PaintSpeed(drawing *draw2d.List, area draw2d.Rect, state *game.Game) {
 	height := bottom - top
 	share := float32((speed - slowest) / (fastest - slowest))
 	stopped := bottom - float32(-slowest/(fastest-slowest))*height
-	drawing.Rectangle(draw2d.Rect{X: x, Y: top, Width: speedBarWidth, Height: height}, speedBarWidth/2, mapRingFaint, mapTransparent, 0)
-	drawing.Rectangle(draw2d.Rect{X: x, Y: bottom - share*height, Width: speedBarWidth, Height: share * height}, speedBarWidth/2, mapOwn, mapTransparent, 0)
-	drawing.Rectangle(draw2d.Rect{X: x - 3, Y: stopped - ringWidth/2, Width: speedBarWidth + 6, Height: ringWidth}, 0, mapLabel, mapTransparent, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: x, Y: top, Width: speedBarWidth, Height: height}, speedBarWidth/2, mapRingFaint, mapTransparent, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: x, Y: bottom - share*height, Width: speedBarWidth, Height: share * height}, speedBarWidth/2, mapOwn, mapTransparent, 0)
+	drawing.Rectangle(draw2d.Rectangle{X: x - 3, Y: stopped - ringWidth/2, Width: speedBarWidth + 6, Height: ringWidth}, 0, mapLabel, mapTransparent, 0)
 	drawing.Text(strconv.Itoa(int(speed)), x-labelSize-14, bottom-share*height+labelSize/2, labelSize, draw2d.Regular, mapLabel)
 }
 

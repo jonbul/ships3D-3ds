@@ -126,7 +126,7 @@ func scaledBitmap(drawing *draw2d.List, rows []string, x, y, size float32, main,
 			for end < len(line) && line[end] == line[column] {
 				end++
 			}
-			drawing.Rectangle(draw2d.Rect{X: x + float32(column)*size, Y: y + float32(row)*size, Width: float32(end-column) * size, Height: size}, 0, colour, draw2d.Color{}, 0)
+			drawing.Rectangle(draw2d.Rectangle{X: x + float32(column)*size, Y: y + float32(row)*size, Width: float32(end-column) * size, Height: size}, 0, colour, draw2d.Color{}, 0)
 			column = end - 1
 		}
 	}

@@ -60,7 +60,7 @@ func (wave *shockwave) show(state *game.Game, triangles [][3]flight.Vector, eye 
 	ringFade, faceFade := impact.Fade(age, impact.WaveSeconds), impact.Fade(age, impact.FlashSeconds)
 	wave.ring.Hidden = wave.struck == 0 || ringFade == 0
 	wave.face.Hidden = wave.struck == 0 || faceFade == 0 || len(triangles) == 0
-	wave.face.Mesh.Material.BaseColor = graphics.Vec4{float32(faceFade), float32(faceFade), float32(faceFade), 1}
+	wave.face.Mesh.Material.BaseColor = graphics.Vector{float32(faceFade), float32(faceFade), float32(faceFade), 1}
 	wave.face.Transform = graphics.Identity()
 	if wave.ring.Hidden {
 		return

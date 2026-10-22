@@ -21,7 +21,7 @@ const backdropRadius = (arena.SkyRadius + arena.CameraFar) / 2
 func backdrop(context *engine.Context) *scene.Node {
 	mesh := ship.Build([]protocol.Layer{{Visible: true, Parts: []protocol.Part{{
 		Type: "sphere", Scale: flight.Vector{2 * backdropRadius, 2 * backdropRadius, 2 * backdropRadius}, Color: "#02030a"}}}}, ship.Coarse)
-	mesh.Material = &scene.Material{Name: "backdrop", Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}, DoubleSided: true}
+	mesh.Material = &scene.Material{Name: "backdrop", Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}, DoubleSided: true}
 	node := &scene.Node{Name: "backdrop", Mesh: mesh, Transform: graphics.Identity(), Moving: true}
 	world := context.Scene.World()
 	world.Nodes = append(world.Nodes, node)
@@ -38,7 +38,7 @@ func followCamera(played *engine.Scene) {
 	}
 	if camera, found := played.MainCamera(); found {
 		position := camera.Transform.Position
-		shownBackdrop.Transform = graphics.Translate(graphics.Vec4{float32(position.X), float32(position.Y), float32(position.Z), 0})
+		shownBackdrop.Transform = graphics.Translate(graphics.Vector{float32(position.X), float32(position.Y), float32(position.Z), 0})
 	}
 }
 

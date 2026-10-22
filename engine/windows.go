@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"math"
 
+	"github.com/akrck02/go-engine/engine"
 	"github.com/akrck02/go-renderer/draw2d"
-	"github.com/akrck02/go-renderer/opengl/overlay"
 
 	"github.com/jonbul/ships3D-3ds/pixelart"
 )
@@ -16,9 +16,9 @@ import (
 var colours = struct {
 	glass, edge, shadow, ink, soft, accent, chosen, dim draw2d.Color
 }{
-	glass: draw2d.Hex("#12224ae0"), edge: draw2d.Hex("#9cc8f2"), shadow: draw2d.Hex("#02060fb0"),
-	ink: draw2d.Hex("#eaf4ff"), soft: draw2d.Hex("#a9bedd"), accent: draw2d.Hex("#5fb0ff"),
-	chosen: draw2d.Hex("#2a4a80"), dim: draw2d.Hex("#5f7a9a"),
+	glass: draw2d.MustHex("#12224ae0"), edge: draw2d.MustHex("#9cc8f2"), shadow: draw2d.MustHex("#02060fb0"),
+	ink: draw2d.MustHex("#eaf4ff"), soft: draw2d.MustHex("#a9bedd"), accent: draw2d.MustHex("#5fb0ff"),
+	chosen: draw2d.MustHex("#2a4a80"), dim: draw2d.MustHex("#5f7a9a"),
 }
 
 // The windows' measures, in pixels.
@@ -57,7 +57,7 @@ func textMeasurer() draw2d.Measurer {
 	if measurer != nil {
 		return measurer
 	}
-	made, err := overlay.NewMeasurer()
+	made, err := engine.TextMeasurer()
 	if err != nil {
 		slog.Warn("text could not be measured: it is guessed", "error", err)
 		measurer = guessedMeasurer{}
@@ -84,8 +84,8 @@ const (
 
 // topHeading draws a heading and its caption over the top of the top screen.
 func topHeading(drawing *draw2d.List, width float32, heading, caption string) {
-	centred(drawing, heading, width, headingBaseline, titleSize, draw2d.Bold, draw2d.Hex(headingInk))
-	centred(drawing, caption, width, captionBaseline, pixelart.TextSize, draw2d.Regular, draw2d.Hex(headingCaptionInk))
+	centred(drawing, heading, width, headingBaseline, titleSize, draw2d.Bold, draw2d.MustHex(headingInk))
+	centred(drawing, caption, width, captionBaseline, pixelart.TextSize, draw2d.Regular, draw2d.MustHex(headingCaptionInk))
 }
 
 // paintScaled paints a screen laid out in the layout's pixels (layout.go), each as many of the
@@ -99,7 +99,7 @@ func paintScaled(drawing *draw2d.List, width, height float32, paint func(drawing
 
 // window draws a window of glass over area, with a title on a ribbon of the accent when title
 // isn't empty.
-func window(drawing *draw2d.List, area draw2d.Rect, title string) {
+func window(drawing *draw2d.List, area draw2d.Rectangle, title string) {
 	shadow := area
 	shadow.X, shadow.Y = shadow.X+shadowDrop, shadow.Y+shadowDrop
 	pixelart.Stepped(drawing, shadow, windowSteps, colours.shadow)
@@ -108,7 +108,7 @@ func window(drawing *draw2d.List, area draw2d.Rect, title string) {
 	if title == "" {
 		return
 	}
-	ribbon := draw2d.Rect{X: area.X + edgeWidth, Y: area.Y + edgeWidth, Width: area.Width - 2*edgeWidth, Height: ribbonHeight}
+	ribbon := draw2d.Rectangle{X: area.X + edgeWidth, Y: area.Y + edgeWidth, Width: area.Width - 2*edgeWidth, Height: ribbonHeight}
 	drawing.Rectangle(ribbon, 0, colours.accent, draw2d.Color{}, 0)
 	drawing.Text(title, ribbon.X+8, ribbon.Y+ribbon.Height-5, pixelart.LabelSize, draw2d.Mono, colours.shadow)
 }

@@ -35,10 +35,10 @@ const (
 
 // Linear colours, from the browser's sRGB hex.
 var (
-	spaceBackground = graphics.Vec4{0.0006, 0.0009, 0.003, 1} // #02030a
-	skyLight        = graphics.Vec4{0.63, 0.69, 1, 1}         // the hemisphere light's sky, #cfd9ff
-	groundLight     = graphics.Vec4{0.010, 0.005, 0.014, 1}   // and its ground, #1a1020
-	sunColour       = graphics.Vec4{1, 0.89, 0.72, 1}         // #fff2dd
+	spaceBackground = graphics.Vector{0.0006, 0.0009, 0.003, 1} // #02030a
+	skyLight        = graphics.Vector{0.63, 0.69, 1, 1}         // the hemisphere light's sky, #cfd9ff
+	groundLight     = graphics.Vector{0.010, 0.005, 0.014, 1}   // and its ground, #1a1020
+	sunColour       = graphics.Vector{1, 0.89, 0.72, 1}         // #fff2dd
 	starColour      = [3]float32{1, 1, 1}
 	edgeColour      = [3]float32{0.004, 0.027, 0.047} // #4fc3f7 at 5 % opacity over the background
 	dustColour      = [3]float32{0.15, 0.19, 0.30}    // #8899bb at 60 %
@@ -61,7 +61,7 @@ func LightSpace(environment *scene.Environment) {
 	environment.SkyZenith = skyLight                                                // the sky's light on the ships
 	environment.GroundAmbient = groundLight
 	environment.SunColor = sunColour
-	environment.SunDirection = graphics.Vec4{1, 0.6, 0.3, 0}.Normalize()
+	environment.SunDirection = graphics.Vector{1, 0.6, 0.3, 0}.Normalize()
 	environment.Ambient = 0.55
 }
 
@@ -74,10 +74,10 @@ func skyNode() *scene.Node {
 		radius := planet.radius
 		mesh := ship.Build([]protocol.Layer{{Visible: true, Parts: []protocol.Part{{
 			Type: "sphere", Scale: flight.Vector{2 * radius, 2 * radius, 2 * radius}, Color: planet.colour}}}}, ship.Fine)
-		mesh.Material = &scene.Material{Name: "planet", Kind: scene.KindLit, BaseColor: graphics.Vec4{1, 1, 1, 1}}
+		mesh.Material = &scene.Material{Name: "planet", Kind: scene.LitKind, BaseColor: graphics.Vector{1, 1, 1, 1}}
 		position := direction.Times(planetDistance)
 		node.Children = append(node.Children, &scene.Node{Name: "planet", Mesh: mesh,
-			Transform: graphics.Translate(graphics.Vec4{float32(position[0]), float32(position[1]), float32(position[2]), 0})})
+			Transform: graphics.Translate(graphics.Vector{float32(position[0]), float32(position[1]), float32(position[2]), 0})})
 	}
 	return node
 }
@@ -154,12 +154,12 @@ func dustCellsAround(nodes []*scene.Node, point flight.Vector) {
 				offset[axis] = corner[axis]
 			}
 		}
-		node.Transform = graphics.Translate(graphics.Vec4{float32(offset[0]), float32(offset[1]), float32(offset[2]), 0})
+		node.Transform = graphics.Translate(graphics.Vector{float32(offset[0]), float32(offset[1]), float32(offset[2]), 0})
 	}
 }
 
 func unlit() *scene.Material {
-	return &scene.Material{Kind: scene.KindUnlit, BaseColor: graphics.Vec4{1, 1, 1, 1}}
+	return &scene.Material{Kind: scene.UnlitKind, BaseColor: graphics.Vector{1, 1, 1, 1}}
 }
 
 // appendDiamond adds an octahedron of size across: a star that looks the same from anywhere.

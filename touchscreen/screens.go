@@ -69,8 +69,8 @@ func arrow(drawing *draw2d.List, x, y float32, direction int) {
 		if direction < 0 {
 			left = x + shipArrowWidth - width
 		}
-		drawing.Rectangle(draw2d.Rect{X: left + textShadowDrop, Y: y + float32(row) + textShadowDrop, Width: width, Height: 1}, 0, Colours.Shadow, draw2d.Color{}, 0)
-		drawing.Rectangle(draw2d.Rect{X: left, Y: y + float32(row), Width: width, Height: 1}, 0, Colours.GoldLight, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: left + textShadowDrop, Y: y + float32(row) + textShadowDrop, Width: width, Height: 1}, 0, Colours.Shadow, draw2d.Color{}, 0)
+		drawing.Rectangle(draw2d.Rectangle{X: left, Y: y + float32(row), Width: width, Height: 1}, 0, Colours.GoldLight, draw2d.Color{}, 0)
 	}
 }
 

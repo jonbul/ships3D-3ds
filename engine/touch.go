@@ -79,7 +79,7 @@ func stickButtons(keys *engine.Input) touchscreen.Buttons {
 func showTouchScreen(paint func(drawing *draw2d.List)) {
 	layout := ui.Layout{Width: ui.Fixed(touchscreen.Width), Height: ui.Fixed(touchscreen.Height)}
 	drawInterface(func(context *ui.Context) {
-		context.Paint(layout, func(area draw2d.Rect, drawing *draw2d.List) {
+		context.Paint(layout, func(area draw2d.Rectangle, drawing *draw2d.List) {
 			start := len(drawing.Commands)
 			paint(drawing)
 			pixelart.Move(drawing, start, area.X, area.Y)

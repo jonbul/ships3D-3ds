@@ -192,14 +192,14 @@ func TestAPageInATallerScreenShowsMoreRows(test *testing.T) {
 	var small, tall Menu
 	var drawing draw2d.List
 	small.Paint(&drawing, FullScreen, page, MenuHint, unfoldSeconds)
-	tall.Paint(&drawing, draw2d.Rect{Width: 640, Height: 480}, page, MenuHint, unfoldSeconds)
+	tall.Paint(&drawing, draw2d.Rectangle{Width: 640, Height: 480}, page, MenuHint, unfoldSeconds)
 	if tall.visible <= small.visible {
 		test.Errorf("a screen twice as tall shows %d rows, the touch screen %d", tall.visible, small.visible)
 	}
 }
 
 func TestAModesCardIsFoundWhereItWasDrawnInAnyScreen(test *testing.T) {
-	screen := draw2d.Rect{X: 100, Y: 50, Width: 600, Height: 300}
+	screen := draw2d.Rectangle{X: 100, Y: 50, Width: 600, Height: 300}
 	card := modeCard(screen, 0, 2)
 	if card.X < screen.X || card.X+card.Width > screen.X+screen.Width || card.Y < screen.Y {
 		test.Fatalf("the card %+v is outside its screen %+v", card, screen)
