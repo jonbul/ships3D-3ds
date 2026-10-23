@@ -201,3 +201,35 @@ func TestHeadingInNearTheEdgeLeavesTheControlsAlone(t *testing.T) {
 		t.Fatal("a ship heading inward was turned")
 	}
 }
+
+func TestRunningIntoAShipIsReportedAgainOnlyEveryQuarterSecond(t *testing.T) {
+	game := welcomed(5) // closer than two crash spheres, 2 × 0.7 × 4 = 5.6
+	reports := 0
+	for frame := range 30 { // half a second
+		messages := game.Step(flight.Controls{}, false, false, 1.0/60, float64(frame)/60)
+		for _, message := range messages {
+			if strings.Contains(message, `"type":"crash"`) && !strings.Contains(message, `"with":"them"`) {
+				t.Fatalf("the crash names another ship: %s", message)
+			}
+		}
+		reports += sentOfType(messages, protocol.TypeCrash)
+	}
+	if reports != 2 { // at 0 and at 0.25 seconds
+		t.Fatalf("%d crash reports in half a second, want 2", reports)
+	}
+}
+
+func TestPassingCloseToAShipIsNoCrash(t *testing.T) {
+	game := welcomed(6) // its bounding spheres touch, its crash spheres don't
+	if reports := sentOfType(game.Step(flight.Controls{}, false, false, 1.0/60, 0), protocol.TypeCrash); reports != 0 {
+		t.Fatalf("%d crash reports, want none", reports)
+	}
+}
+
+func TestADeadShipCannotBeRunInto(t *testing.T) {
+	game := welcomed(5)
+	game.Remotes["them"].Player.Dead = true
+	if reports := sentOfType(game.Step(flight.Controls{}, false, false, 1.0/60, 0), protocol.TypeCrash); reports != 0 {
+		t.Fatalf("%d crash reports, want none", reports)
+	}
+}

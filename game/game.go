@@ -57,6 +57,9 @@ type Game struct {
 	Welcomed bool
 	Alive    bool
 	Problem  string // the server's last error message
+	// The assault only: the lobby while we wait in it, and the round while we play one.
+	Lobby *Lobby
+	Round *Round
 	// SnapshotAt is when the server's last snapshot arrived, in seconds; HitAt when we were last
 	// hit.
 	SnapshotAt, HitAt float64
@@ -75,13 +78,14 @@ type Game struct {
 	diedAt    float64
 	lastState float64
 	lastFire  float64
+	lastCrash float64 // seconds, when we last reported running into a ship
 	bulletIds int
 	outgoing  []string
 }
 
 // New is a game waiting for the server's welcome.
 func New() *Game {
-	return &Game{Remotes: map[string]*Remote{}, lastFire: -1e9, lastState: -1e9}
+	return &Game{Remotes: map[string]*Remote{}, lastFire: -1e9, lastState: -1e9, lastCrash: -1e9}
 }
 
 // CanRespawn tells whether we are dead long enough to fly again.
@@ -96,6 +100,9 @@ func (game *Game) RespawnIn(now float64) float64 {
 
 // Handle applies one message from the server, at now seconds.
 func (game *Game) Handle(message protocol.Incoming, states []protocol.PlayerState, now float64) {
+	if game.handleAssault(message, now) {
+		return
+	}
 	switch message.Type {
 	case protocol.TypeWelcome:
 		game.welcome(message, now)
@@ -113,6 +120,9 @@ func (game *Game) Handle(message protocol.Incoming, states []protocol.PlayerStat
 	case protocol.TypeFire:
 		game.Others = append(game.Others, Bullet{Id: message.Id, Position: message.Position, Direction: message.Direction, expiresAt: now + game.bulletSeconds()})
 	case protocol.TypeDamage:
+		if message.Target == protocol.MothershipTarget {
+			game.damageMothership(message.Life)
+		}
 		game.setLife(message.Target, message.Life)
 		game.note(ShipHit, message.Target, now)
 		if message.Target == game.Id {
@@ -206,10 +216,8 @@ func (game *Game) Step(controls flight.Controls, firing, respawning bool, second
 		return game.outgoing
 	}
 	if game.Alive {
-		controls = game.steerHome(controls)
-		flight.Step(&game.Own, controls, game.Settings.Settings, seconds)
-		game.watchEdge(now)
-		if firing && !game.Returning && now-game.lastFire >= float64(game.Settings.FireCooldownMs)/millisecondsPerSecond {
+		game.move(controls, seconds, now)
+		if firing && !game.Returning && now-game.lastFire >= game.cooldownSeconds() {
 			game.fire(now)
 		}
 		if interval := 1 / float64(game.Settings.TickRate); game.Settings.TickRate > 0 && now-game.lastState >= interval-stateSlackSeconds {
@@ -225,6 +233,58 @@ func (game *Game) Step(controls flight.Controls, firing, respawning bool, second
 	game.moveRemotes(seconds, now)
 	game.moveBullets(seconds, now)
 	return game.outgoing
+}
+
+// A ship's crash sphere, as a share of the ship's radius (its bounding sphere, which overstates
+// most designs, so only a solid overlap counts), and how often a crash is reported again while
+// the server hasn't agreed to it, as the browser does.
+const (
+	crashShare         = 0.7
+	crashReportSeconds = 0.25
+)
+
+// reportCrash tells the server when our ship runs into another one; the server decides, and its
+// deaths destroy both.
+func (game *Game) reportCrash(now float64) {
+	if now-game.lastCrash < crashReportSeconds {
+		return
+	}
+	target, found := game.shipRunInto()
+	if !found {
+		return
+	}
+	game.lastCrash = now
+	game.outgoing = append(game.outgoing, protocol.Crash(target))
+}
+
+// shipRunInto is the ship whose crash sphere overlaps ours, if any.
+func (game *Game) shipRunInto() (target string, found bool) {
+	radius := crashShare * game.Settings.ShipRadius
+	if game.Round != nil && game.Round.shape.SphereHits(game.Own.Position, radius) {
+		return protocol.MothershipTarget, true
+	}
+	touching := 2 * radius
+	for id, remote := range game.Remotes {
+		if remote.Player.Dead || remote.Player.Seat != nil { // a gunner sits in the hull: that is the hull
+			continue
+		}
+		if remote.Shown.Position.Subtract(game.Own.Position).Length() <= touching {
+			return id, true
+		}
+	}
+	return "", false
+}
+
+// move flies our ship by seconds with the player's controls, or, for a gunner, turns the turret.
+func (game *Game) move(controls flight.Controls, seconds, now float64) {
+	if game.gunning() {
+		game.aimTurret(controls, seconds)
+		return
+	}
+	controls = game.steerHome(controls)
+	flight.Step(&game.Own, controls, game.Settings.Settings, seconds)
+	game.watchEdge(now)
+	game.reportCrash(now)
 }
 
 // edgeShare is how close to the world's radius counts as touching its edge: the flight model
@@ -358,8 +418,11 @@ func (game *Game) moveBullets(seconds, now float64) {
 
 // shipHit finds the ship, as we draw it, that something moving from from to to passed through.
 func (game *Game) shipHit(from, to flight.Vector) (target string, hit bool) {
+	if game.attacking() {
+		return protocol.MothershipTarget, game.Round.shape.SegmentHits(from, to)
+	}
 	for id, remote := range game.Remotes {
-		if !remote.Player.Dead && flight.SegmentHitsSphere(from, to, remote.Shown.Position, game.Settings.ShipRadius) {
+		if !remote.Player.Dead && game.canHit(remote) && flight.SegmentHitsSphere(from, to, remote.Shown.Position, game.Settings.ShipRadius) {
 			return id, true
 		}
 	}

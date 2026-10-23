@@ -11,7 +11,7 @@ import (
 )
 
 // shipMaterial lights every ship like the sun lights the island: the browser's flat shading.
-var shipMaterial = &scene.Material{Name: "ship", Kind: scene.KindLit, BaseColor: [4]float32{1, 1, 1, 1}, DoubleSided: true}
+var shipMaterial = &scene.Material{Name: "ship", Kind: scene.LitKind, BaseColor: [4]float32{1, 1, 1, 1}, DoubleSided: true}
 
 // Build makes one mesh of a ship's visible parts at a detail, in the design's own units: the
 // caller scales it to the game's ship size. Parts of a type it doesn't know are left out.
