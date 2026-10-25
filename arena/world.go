@@ -45,7 +45,12 @@ type World struct {
 	ships   map[meshKey]builtShip // built once per design and detail
 	// Wanted is told the models a design shows that haven't arrived, when it is built; the game
 	// fetches them, and ForgetModel builds the design again once one is in. Nil when nobody fetches.
-	Wanted                 func(ids []string)
+	Wanted func(ids []string)
+	// LampsShine says whether the ships' lamps light what is near them, or only glow. On a New
+	// 3DS even our own ship's lamps took it from 60 frames a second to 20 while the ship turned:
+	// its light is worked out on the processor for every mesh a lamp reaches.
+	LampsShine             bool
+	lamps                  []scene.PointLight // this frame's, made room for once
 	ownBullet, otherBullet *scene.Mesh
 	camera                 chase.Camera
 	wasAlive               bool
@@ -93,7 +98,7 @@ func NewWorld() *World { return NewWorldIn(scene.New()) }
 // nodes are added to the scene's, and its light set.
 func NewWorldIn(space *scene.Scene) *World {
 	LightSpace(&space.Environment)
-	world := &World{scene: space, ships: map[meshKey]builtShip{}, remotes: map[string]*scene.Node{}}
+	world := &World{scene: space, ships: map[meshKey]builtShip{}, remotes: map[string]*scene.Node{}, lamps: make([]scene.PointLight, 0, maximumLamps)}
 	world.sky = skyNode()
 	world.edge = &scene.Node{Name: "world edge", Transform: graphics.Identity(), Hidden: true}
 	world.crash = newCrash(space)
@@ -144,6 +149,10 @@ func (world *World) Show(state *game.Game, events []game.Event, view *camera.Len
 	}
 	world.own.Hidden = !state.Alive || state.Round != nil && state.Round.Seat != nil // a gunner looks out of the turret
 	world.own.Transform = TransformOf(state.Own.Position, state.Own.Rotation, scale)
+	world.ClearLamps()
+	if world.LampsShine && !world.own.Hidden {
+		world.AddLamps(world.ShipModel(state.Player.Ship.Id, state.Player.Ship.Layers, false), world.own.Transform, scale)
+	}
 	if state.Alive && !world.wasAlive {
 		world.camera.Reset() // back from a respawn, far from the wreck
 	}
@@ -287,8 +296,12 @@ func (world *World) showRemotes(state *game.Game) {
 			node.Transform = TransformOf(player.Shown.Position, player.Shown.Rotation, turretShare*state.Settings.ShipRadius)
 			continue
 		}
-		Wear(node, world.ShipModel(player.Player.Ship.Id, player.Player.Ship.Layers, distance > coarseDistance))
+		model := world.ShipModel(player.Player.Ship.Id, player.Player.Ship.Layers, distance > coarseDistance)
+		Wear(node, model)
 		node.Transform = TransformOf(player.Shown.Position, player.Shown.Rotation, player.Player.Scale)
+		if world.LampsShine {
+			world.AddLamps(model, node.Transform, player.Player.Scale)
+		}
 	}
 }
 

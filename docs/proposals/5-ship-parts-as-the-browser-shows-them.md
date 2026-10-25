@@ -16,7 +16,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 | R1 | A light part shows as a bulb glowing in its colour, mirrored like any part | Test: a design with a light makes a glowing mesh; hangar screenshot |
 | R2 | A part with an opacity is see-through by that much | Test: the part's material is transparent with that alpha; screenshot |
 | R3 | A model part shows its `.glb`, fitted to its unit cube, fetched once and kept | Test: a design with a small model makes its mesh; the Lada Niva in the hangar |
-| R4 | Lights shine on the ship: all of them on the desktop, and on the 3DS only as many as keep 60 fps | Played; STATS in an assault |
+| R4 | Lights shine on the ship: all of them on the desktop, and on the 3DS only as many as keep 60 fps (none, measured) | Played; STATS |
 | R5 | Once go-renderer has image textures, the 8 built-in textures and `textureUrl` images tile and are tinted by the part's colour, as in the browser | Test per texture; a textured ship beside the browser |
 | R6 | A part the game can't show yet is left out, and the rest of the ship still shows | Test: an unknown type doesn't break the design |
 
@@ -38,10 +38,12 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
   - opacity is a `Transparent` material with that alpha, one mesh for each twentieth of opacity;
   - a texture is an image once go-renderer has them (R5); until then a part shows its colour.
   - Parts are grouped by material, so a ship is still a few meshes and draws.
-- **Real light (R4).** go-engine's point lights follow their node.
-  - On the desktop every lamp is one.
-  - On the 3DS, light is baked on the CPU again whenever a lit ship turns, so only our own
-    ship's lamps shine there. The others glow without lighting. Measured before deciding more.
+- **Real light (R4).** Each lamp is a go-renderer point light, placed by its ship every frame and
+  handed to go-engine with `Scene.SetPointLights` (added for this). It reaches six design units.
+  - On the desktop every ship's lamps shine, up to 64 at once.
+  - On the 3DS none do: light is baked on the processor for every mesh a lamp reaches, and even
+    our own ship's lamps took a New 3DS (in Azahar) from 60 frames a second to 20 while it turned.
+    The bulbs still glow.
 - **Models (R3).** `loaders.ReadScene` reads the `.glb` from the server's bytes. Its meshes are
   fitted to the part's unit cube, as the browser's `models.ts` does. They are fetched in the
   background, once each per run, and kept per `modelId` in memory; until one arrives the rest of
@@ -55,7 +57,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 - [x] T2 — Lights as glowing bulbs · ship/ · R1
 - [x] T3 — Opacity · ship/ · R2
 - [x] T4 — `.glb` parts: fetch, cache, fit · ship/, account/, engine/ · R3 — kept in memory only: not yet on the SD card
-- [ ] T5 — Real lights, per platform, measured · engine/, arena/ · R4
+- [x] T5 — Real lights, per platform, measured · engine/, arena/ · R4 — go-engine pinned to its `feature/program-lights` until it is on main
 - [ ] T6 — Image textures and `textureUrl`, once go-renderer has them · ship/ · R5
 
 ## Result

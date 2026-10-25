@@ -29,6 +29,8 @@ var chosen = struct {
 func stage(context *engine.Context) *arena.World {
 	world := arena.NewWorldIn(context.Scene.World())
 	world.Wanted = models.want
+	world.LampsShine = engine.RunningOn() != engine.Nintendo3DSTarget
+	context.Scene.SetPointLights(nil) // the scene before may have left its lamps
 	shownBackdrop = backdrop(context)
 	engine.SetSecondScreen(nil) // a screen that shows a scene there (the hangar, the radar) puts it back
 	if camera, found := context.Scene.MainCamera(); found {

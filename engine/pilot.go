@@ -134,6 +134,7 @@ func (pilot *Pilot) show(context *engine.Context) {
 	flying := state.Welcomed && state.Alive
 	pilot.sound.RunEngine(flying, math.Abs(state.Own.Speed)/math.Max(state.Settings.MaxSpeed, 1))
 	pilot.world.Show(state, events, &pilot.view, context.Delta, context.Time)
+	context.Scene.SetPointLights(pilot.world.Lamps())
 	pilot.radar.show(state, context.Time, pilot.zoom, player.Settings.FlatRadar)
 	look(context, pilot.view)
 	delay := 0.0

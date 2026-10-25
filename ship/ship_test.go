@@ -181,6 +181,9 @@ func TestALightIsABulbGlowingInItsColourMirroredLikeAnyPart(t *testing.T) {
 	if glow.Colors[0] != 1 || glow.Colors[1] != 0 {
 		t.Errorf("the bulb's colour is %v, want red", glow.Colors[:3])
 	}
+	if len(model.Lamps) != 2 || model.Lamps[0].Position != light.Position || model.Lamps[1].Position != (flight.Vector{-2, 0, 0}) || model.Lamps[0].Intensity != 2 || model.Lamps[0].Colour != [3]float32{1, 0, 0} {
+		t.Errorf("the lamps are %+v, want a red one of intensity 2 at each side", model.Lamps)
+	}
 	box := Build([]protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}, Fine)
 	if got, want := len(model.Body.Positions), len(box.Positions); got != want {
 		t.Errorf("the body has %d positions, want only the box's %d", got, want)

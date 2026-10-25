@@ -123,6 +123,11 @@ func (choice *Ships) show(context *engine.Context) {
 	choice.world.HideTitle()
 	look(context, arena.HangarCamera)
 	turnShip(choice.turning, model, radius, context.Time)
+	choice.world.ClearLamps()
+	if choice.world.LampsShine && !choice.turning.Hidden {
+		choice.world.AddLamps(model, choice.turning.Transform, hangarShipRadius/radius)
+	}
+	context.Scene.SetPointLights(choice.world.Lamps())
 }
 
 // paintTouchScreen draws the arrows over the hangar, or the menu over it when it is open.

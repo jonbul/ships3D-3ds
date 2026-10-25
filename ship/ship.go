@@ -27,11 +27,42 @@ const partLight = "light"
 type Model struct {
 	Body   *scene.Mesh
 	Others []*scene.Mesh
+	Lamps  []Lamp // where its lights shine from
+}
+
+// Lamp is a light part as a light: where the design puts it (a mirrored one twice), its linear
+// colour and its intensity.
+type Lamp struct {
+	Position  flight.Vector
+	Colour    [3]float32
+	Intensity float64
+}
+
+// lamps are the design's visible lights, as lamps.
+func lamps(layers []protocol.Layer) []Lamp {
+	var found []Lamp
+	for _, layer := range layers {
+		if !layer.Visible {
+			continue
+		}
+		for _, part := range layer.Parts {
+			if !isLight(part) {
+				continue
+			}
+			lamp := Lamp{Position: part.Position, Colour: linearColour(part.Color), Intensity: max(part.Intensity, 0)}
+			found = append(found, lamp)
+			if part.Mirror {
+				lamp.Position[0] = -lamp.Position[0]
+				found = append(found, lamp)
+			}
+		}
+	}
+	return found
 }
 
 // BuildModel makes a design's meshes at a detail, in the design's own units.
 func BuildModel(layers []protocol.Layer, detail Detail) Model {
-	model := Model{Body: Build(layers, detail)}
+	model := Model{Body: Build(layers, detail), Lamps: lamps(layers)}
 	if glow := build(layers, detail, "ship lights", glowMaterial, isLight); len(glow.Positions) > 0 {
 		model.Others = append(model.Others, glow)
 	}
