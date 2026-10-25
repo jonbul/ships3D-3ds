@@ -1,6 +1,7 @@
 package ship
 
 import (
+	"encoding/json"
 	"math"
 	"testing"
 
@@ -139,5 +140,26 @@ func TestAHeavyDesignGetsAPlainerDetail(t *testing.T) {
 	detail := Within(heavy, 20000)
 	if detail == Fine || Triangles(heavy, detail) > 20000 && detail != Minimal {
 		t.Fatalf("got a detail of %d triangles", Triangles(heavy, detail))
+	}
+}
+
+func TestAPartOfAnUnknownTypeIsLeftOutAndTheRestStillShows(t *testing.T) {
+	unknown := boxPart(flight.Vector{3, 0, 0}, true)
+	unknown.Type = "hologram"
+	layers := []protocol.Layer{{Visible: true, Parts: []protocol.Part{unknown, boxPart(flight.Vector{}, false)}}}
+	alone := []protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}
+	if got, want := len(Build(layers, Fine).Positions), len(Build(alone, Fine).Positions); got != want {
+		t.Fatalf("the design made %d positions, want the box's %d", got, want)
+	}
+}
+
+func TestTheBrowsersNewFieldsAreRead(t *testing.T) {
+	var part protocol.Part
+	text := `{"type":"light","color":"#fff1c4","intensity":2,"opacity":0.5,"texture":"carbon","textureUrl":"https://example.com/a.png","modelId":"m1","mirror":true}`
+	if err := json.Unmarshal([]byte(text), &part); err != nil {
+		t.Fatal(err)
+	}
+	if part.Intensity != 2 || part.Opacity != 0.5 || part.Texture != "carbon" || part.TextureURL == "" || part.ModelId != "m1" {
+		t.Fatalf("read %+v", part)
 	}
 }

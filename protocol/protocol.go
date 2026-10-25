@@ -52,6 +52,16 @@ type Part struct {
 	Scale    flight.Vector `json:"scale"`
 	Color    string        `json:"color"`  // "#rrggbb"
 	Mirror   bool          `json:"mirror"` // also drawn reflected across X = 0
+	// Texture is one of the browser's built-in textures, or TextureURL an https image, tinted by
+	// the colour; neither for a plain part.
+	Texture    string `json:"texture,omitempty"`
+	TextureURL string `json:"textureUrl,omitempty"`
+	// Opacity is how see-through the part is, from 0.05 to 1; 0 (left out) for an opaque part.
+	Opacity float64 `json:"opacity,omitempty"`
+	// Intensity is a light's brightness; only parts of type "light" have it.
+	Intensity float64 `json:"intensity,omitempty"`
+	// ModelId names the imported model a part of type "model" shows.
+	ModelId string `json:"modelId,omitempty"`
 }
 
 // Layer groups parts in the editor; hidden layers aren't drawn.
