@@ -122,12 +122,18 @@ func build(layers []protocol.Layer, detail Detail, name string, material *scene.
 	return mesh
 }
 
-// shape is the primitive a part is drawn with: its own type, or a sphere for a light's bulb.
-func shape(part protocol.Part) string {
-	if isLight(part) {
-		return partSphere
+// shapeOf is what a part is drawn with: its model's triangles and colours (none until the model
+// is added), a sphere for a light's bulb, or its own primitive; colours is nil for the part's
+// own colour.
+func shapeOf(part protocol.Part, detail Detail) (triangles []triangle, colours [][3][3]float32) {
+	switch {
+	case part.Type == partModel:
+		shape := models[part.ModelId]
+		return shape.triangles, shape.colours
+	case isLight(part):
+		return primitive(partSphere, detail), nil
 	}
-	return part.Type
+	return primitive(part.Type, detail), nil
 }
 
 // Triangles is how many triangles BuildModel makes of a design at a detail.
@@ -145,7 +151,8 @@ func triangles(layers []protocol.Layer, detail Detail, kept func(protocol.Part) 
 			if !kept(part) {
 				continue
 			}
-			triangles := len(primitive(shape(part), detail))
+			shape, _ := shapeOf(part, detail)
+			triangles := len(shape)
 			if part.Mirror {
 				triangles *= 2
 			}
@@ -170,14 +177,18 @@ func Within(layers []protocol.Layer, maximum int) Detail {
 func addPart(mesh *scene.Mesh, part protocol.Part, detail Detail, position, rotation flight.Vector) {
 	turn := flight.FromEulerXYZ(rotation[0], rotation[1], rotation[2])
 	colour := linearColour(part.Color)
-	for _, corners := range primitive(shape(part), detail) {
+	shape, colours := shapeOf(part, detail)
+	for each, corners := range shape {
 		var placed triangle
 		for index, corner := range corners {
 			scaled := flight.Vector{corner[0] * part.Scale[0], corner[1] * part.Scale[1], corner[2] * part.Scale[2]}
 			placed[index] = point(turn.Apply(scaled).Add(position))
 		}
 		normal := faceNormal(placed)
-		for _, corner := range placed {
+		for index, corner := range placed {
+			if colours != nil {
+				colour = colours[each][index]
+			}
 			mesh.Positions = append(mesh.Positions, float32(corner[0]), float32(corner[1]), float32(corner[2]))
 			mesh.Normals = append(mesh.Normals, normal[0], normal[1], normal[2])
 			mesh.Colors = append(mesh.Colors, colour[0], colour[1], colour[2], 1)

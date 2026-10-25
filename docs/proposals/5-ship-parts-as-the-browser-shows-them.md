@@ -43,8 +43,9 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
   - On the 3DS, light is baked on the CPU again whenever a lit ship turns, so only our own
     ship's lamps shine there. The others glow without lighting. Measured before deciding more.
 - **Models (R3).** `loaders.ReadScene` reads the `.glb` from the server's bytes. Its meshes are
-  fitted to the part's unit cube, as the browser's `models.ts` does. They are kept per `modelId`
-  in memory, and on the 3DS on the SD card, with a size limit there.
+  fitted to the part's unit cube, as the browser's `models.ts` does. They are fetched in the
+  background, once each per run, and kept per `modelId` in memory; until one arrives the rest of
+  the ship shows. A model may have 100,000 triangles on the desktop and 6,000 on the 3DS.
 - Not taken: waiting for image textures before anything else. Lights and models are missing
   parts, so they come first.
 
@@ -53,7 +54,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 - [x] T1 — The new fields in `protocol.Part`; unknown types left out · protocol/, ship/ · R6
 - [x] T2 — Lights as glowing bulbs · ship/ · R1
 - [x] T3 — Opacity · ship/ · R2
-- [ ] T4 — `.glb` parts: fetch, cache, fit · ship/, account/ · R3
+- [x] T4 — `.glb` parts: fetch, cache, fit · ship/, account/, engine/ · R3 — kept in memory only: not yet on the SD card
 - [ ] T5 — Real lights, per platform, measured · engine/, arena/ · R4
 - [ ] T6 — Image textures and `textureUrl`, once go-renderer has them · ship/ · R5
 

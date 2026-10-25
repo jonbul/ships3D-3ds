@@ -39,10 +39,13 @@ var (
 // World is the space the game is seen in, on the top screen: the sky, the ships, the bullets and
 // the effects.
 type World struct {
-	scene                  *scene.Scene
-	own                    *scene.Node
-	ownShip                string
-	ships                  map[meshKey]ship.Model // built once per design and detail
+	scene   *scene.Scene
+	own     *scene.Node
+	ownShip string
+	ships   map[meshKey]builtShip // built once per design and detail
+	// Wanted is told the models a design shows that haven't arrived, when it is built; the game
+	// fetches them, and ForgetModel builds the design again once one is in. Nil when nobody fetches.
+	Wanted                 func(ids []string)
 	ownBullet, otherBullet *scene.Mesh
 	camera                 chase.Camera
 	wasAlive               bool
@@ -90,7 +93,7 @@ func NewWorld() *World { return NewWorldIn(scene.New()) }
 // nodes are added to the scene's, and its light set.
 func NewWorldIn(space *scene.Scene) *World {
 	LightSpace(&space.Environment)
-	world := &World{scene: space, ships: map[meshKey]ship.Model{}, remotes: map[string]*scene.Node{}}
+	world := &World{scene: space, ships: map[meshKey]builtShip{}, remotes: map[string]*scene.Node{}}
 	world.sky = skyNode()
 	world.edge = &scene.Node{Name: "world edge", Transform: graphics.Identity(), Hidden: true}
 	world.crash = newCrash(space)
@@ -183,6 +186,12 @@ func (world *World) placeSpace(state *game.Game) {
 	}
 }
 
+// builtShip is a design's model, and the design, to know which models it shows.
+type builtShip struct {
+	model  ship.Model
+	layers []protocol.Layer
+}
+
 // meshKey is a design near or far.
 type meshKey struct {
 	id  string
@@ -200,16 +209,32 @@ const (
 // ShipModel is a design's meshes near or far, built the first time they are asked for.
 func (world *World) ShipModel(id string, layers []protocol.Layer, far bool) ship.Model {
 	key := meshKey{id, far}
-	if model, found := world.ships[key]; found {
-		return model
+	if built, found := world.ships[key]; found {
+		return built.model
+	}
+	if missing := ship.MissingModels(layers); len(missing) > 0 && world.Wanted != nil {
+		world.Wanted(missing)
 	}
 	budget := nearTriangles
 	if far {
 		budget = farTriangles
 	}
 	model := ship.BuildModel(layers, ship.Within(layers, budget))
-	world.ships[key] = model
+	world.ships[key] = builtShip{model, layers}
 	return model
+}
+
+// ForgetModel drops the designs built without a model that has now arrived, so they are built
+// again with it the next time they are shown.
+func (world *World) ForgetModel(id string) {
+	for key, built := range world.ships {
+		if ship.ShowsModel(built.layers, id) {
+			delete(world.ships, key)
+			if key.id == world.ownShip {
+				world.ownShip = "" // our own ship is worn again on the next frame
+			}
+		}
+	}
 }
 
 // Wear shows a design's model on a ship's node: the body on the node, and its other meshes on

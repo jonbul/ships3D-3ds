@@ -95,6 +95,7 @@ func matchCookie() string {
 // Update moves the match on a frame and shows it, through the scene's camera.
 func (pilot *Pilot) Update(context *engine.Context) {
 	pilot.now = context.Time
+	models.receive(pilot.world)
 	darkenSky(context.Scene)
 	if pilot.played == nil {
 		pilot.pressWithoutMatch(context)

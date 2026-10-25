@@ -96,6 +96,7 @@ func fetchShips() (ships []protocol.Ship, own int, status string) {
 // Update turns the ship, and goes through the ships, on or back.
 func (choice *Ships) Update(context *engine.Context) {
 	choice.now = context.Time
+	models.receive(choice.world)
 	if choice.reload {
 		choice.reload = false
 		choice.load()

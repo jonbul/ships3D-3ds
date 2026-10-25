@@ -51,6 +51,13 @@ func fakeServer() *httptest.Server {
 		}
 		writer.Write([]byte(`{"user":null}`)) //nolint:errcheck // as above
 	})
+	mux.HandleFunc("GET /models/{id}", func(writer http.ResponseWriter, request *http.Request) {
+		if request.PathValue("id") != "m1" {
+			http.NotFound(writer, request)
+			return
+		}
+		writer.Write([]byte("glTF and the rest")) //nolint:errcheck // as above
+	})
 	mux.HandleFunc("POST /logout", func(writer http.ResponseWriter, _ *http.Request) {
 		writer.Write([]byte(`{"success":true}`)) //nolint:errcheck // as above
 	})
@@ -82,6 +89,18 @@ func TestAPlayerLogsInAndSeesTheirShips(t *testing.T) {
 	}
 	if err := server.LogOut(session); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAModelsFileIsFetchedAndAMissingOneRefused(t *testing.T) {
+	test := fakeServer()
+	defer test.Close()
+	server := serverFor(t, test)
+	if file, err := server.Model("m1"); err != nil || string(file) != "glTF and the rest" {
+		t.Fatalf("got %q, %v", file, err)
+	}
+	if _, err := server.Model("gone"); !errors.Is(err, ErrServer) {
+		t.Fatalf("got %v, want %v", err, ErrServer)
 	}
 }
 

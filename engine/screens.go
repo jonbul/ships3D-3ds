@@ -28,6 +28,7 @@ var chosen = struct {
 // camera seeing as far as the sky.
 func stage(context *engine.Context) *arena.World {
 	world := arena.NewWorldIn(context.Scene.World())
+	world.Wanted = models.want
 	shownBackdrop = backdrop(context)
 	engine.SetSecondScreen(nil) // a screen that shows a scene there (the hangar, the radar) puts it back
 	if camera, found := context.Scene.MainCamera(); found {

@@ -6,6 +6,7 @@ package account
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/jonbul/ships3D-3ds/protocol"
@@ -105,6 +106,27 @@ func (server Server) Ships(session Session) (Ships, error) {
 		return Ships{}, fmt.Errorf("%w: %w", ErrServer, err)
 	}
 	return ships, nil
+}
+
+// modelTimeout is how long an imported model may take to arrive: up to 4 MB, more than the
+// other answers, over a console's wifi.
+const modelTimeout = 30 * time.Second
+
+// Model fetches an imported model's .glb file (controllers/models.go).
+func (server Server) Model(id string) ([]byte, error) {
+	connection, err := server.Dial()
+	if err != nil {
+		return nil, err
+	}
+	defer connection.Close() //nolint:errcheck // one request per connection: nothing is lost if closing fails
+	response, err := web.Do(connection, web.Request{Method: methodGet, Path: "/models/" + url.PathEscape(id), Host: server.Host}, modelTimeout)
+	if err != nil {
+		return nil, err
+	}
+	if response.Status != statusOK {
+		return nil, fmt.Errorf("%w: status %d", ErrServer, response.Status)
+	}
+	return response.Body, nil
 }
 
 // Who asks the server whose session this is: the username, and false when the server no longer
