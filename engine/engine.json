@@ -13,6 +13,8 @@
 		"right": {"desktop": ["Right", "Pad Right"], "nintendo3ds": ["Right"]},
 		"previous page": {"desktop": ["Q", "Pad Left Shoulder"], "nintendo3ds": ["L"]},
 		"next page": {"desktop": ["E", "Pad Right Shoulder"], "nintendo3ds": ["R"]},
+		"zoom in": {"desktop": ["Plus", "Pad Up"], "nintendo3ds": ["Up"]},
+		"zoom out": {"desktop": ["Minus", "Pad Down"], "nintendo3ds": ["Down"]},
 		"centre tilt": {"nintendo3ds": ["L"]},
 		"pitch": {"desktop": ["Down-", "Up+"]},
 		"yaw": {"desktop": ["Left-", "Right+"]},

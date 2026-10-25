@@ -27,9 +27,9 @@ func (pilot *Pilot) pressMenus(context *engine.Context) bool {
 		pilot.menu.press(pilot.pages(), read, pilot.now)
 	case !state.Welcomed:
 		return pilot.pressJoining(read)
-	case read.Pressed&touchscreen.ButtonUp != 0:
+	case keys.Action("zoom in").Pressed:
 		pilot.zoom = max(pilot.zoom-1, 0)
-	case read.Pressed&touchscreen.ButtonDown != 0:
+	case keys.Action("zoom out").Pressed:
 		pilot.zoom = min(pilot.zoom+1, len(radar.Ranges)-1)
 	}
 	return false

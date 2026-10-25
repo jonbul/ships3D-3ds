@@ -32,7 +32,7 @@ var (
 	menuHints    = &hintLine{parts: []hintPart{{[]string{"confirm"}, "OK"}, {[]string{"back"}, "BACK"}, {[]string{"previous page", "next page"}, "PAGE"}}}
 	modeHints    = &hintLine{parts: []hintPart{{[]string{"left", "right"}, "CHOOSE"}, {[]string{"confirm"}, "OK"}, {[]string{"back"}, "BACK"}}}
 	joiningHints = &hintLine{parts: []hintPart{{[]string{"back"}, "SHIPS"}}}
-	matchHints   = &hintLine{parts: []hintPart{{[]string{"fire"}, "FIRE"}, {[]string{"up", "down"}, "ZOOM"}, {[]string{"menu"}, "MENU"}}}
+	matchHints   = &hintLine{parts: []hintPart{{[]string{"fire"}, "FIRE"}, {[]string{"zoom in", "zoom out"}, "ZOOM"}, {[]string{"menu"}, "MENU"}}}
 	shipHints    = &hintLine{parts: []hintPart{{[]string{"left", "right"}, "SHIP"}, {[]string{"back"}, "BACK"}, {[]string{"menu"}, "MENU"}}}
 	launchHint   = &hintLine{parts: []hintPart{{[]string{"confirm"}, "LAUNCH"}}}
 	startHint    = &hintLine{parts: []hintPart{{[]string{"confirm"}, "START"}}}

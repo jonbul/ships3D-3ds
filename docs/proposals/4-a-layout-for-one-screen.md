@@ -58,7 +58,8 @@ Built and played on Linux (1280 × 720, 900 × 960, 700 × 600) and in Azahar:
   (go-engine's `PlaceSecondScreenOver`, which go-engine's session added for this). Its zoom is above
   it, the speed beside it, the score under the life bar, the keys along the bottom.
 - The keys are engine.json's actions on both targets. A test checks that every action the code
-  reads is bound.
+  reads is bound, and another that no key does two things in flight: the arrows once climbed and
+  zoomed the radar at once, so on the desktop the radar zooms with + and −, as in the browser.
 - The layout is chosen by `engine.RunningOn()`: the build files no longer say whether there is a
   touch screen.
 

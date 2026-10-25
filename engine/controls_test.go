@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/akrck02/go-engine/engine"
@@ -17,7 +18,8 @@ var onlyOn = map[string]string{
 	"yaw":         "desktop",
 }
 
-func TestEveryActionTheGameReadsIsBoundOnTheDesktopAndThe3DS(test *testing.T) {
+// boundActions are engine.json's actions: for each, the keys bound on each target.
+func boundActions(test *testing.T) map[string]map[string][]string {
 	read, err := os.ReadFile("engine.json")
 	if err != nil {
 		test.Fatal(err)
@@ -28,6 +30,13 @@ func TestEveryActionTheGameReadsIsBoundOnTheDesktopAndThe3DS(test *testing.T) {
 	if err := json.Unmarshal(read, &settings); err != nil {
 		test.Fatal(err)
 	}
+	return settings.Actions
+}
+
+func TestEveryActionTheGameReadsIsBoundOnTheDesktopAndThe3DS(test *testing.T) {
+	settings := struct {
+		Actions map[string]map[string][]string
+	}{boundActions(test)}
 	sources, _ := filepath.Glob("*.go")
 	checked := 0
 	named := regexp.MustCompile(`Action\("([^"]+)"\)|\{"([^"]+)", touchscreen\.Button`)
@@ -51,6 +60,26 @@ func TestEveryActionTheGameReadsIsBoundOnTheDesktopAndThe3DS(test *testing.T) {
 	}
 	if checked == 0 {
 		test.Fatal("no action found in the game's code: the test reads nothing")
+	}
+}
+
+// flightActions are the actions read while flying: a key in two of them would do both at once, as
+// the arrows once climbed and zoomed the radar together.
+var flightActions = []string{"fire", "menu", "zoom in", "zoom out", "pitch", "yaw", "roll", "throttle"}
+
+func TestNoKeyDoesTwoThingsInFlight(test *testing.T) {
+	actions := boundActions(test)
+	for _, target := range []string{"desktop", "nintendo3ds"} {
+		owner := map[string]string{}
+		for _, action := range flightActions {
+			for _, key := range actions[action][target] {
+				key = strings.TrimRight(key, "+-") // an axis's key, as "Up+"
+				if other, taken := owner[key]; taken {
+					test.Errorf("on %s, %s is bound to both %q and %q", target, key, other, action)
+				}
+				owner[key] = action
+			}
+		}
 	}
 }
 
