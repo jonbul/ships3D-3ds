@@ -208,3 +208,15 @@ func TestAModesCardIsFoundWhereItWasDrawnInAnyScreen(test *testing.T) {
 		test.Errorf("a touch on the first card chose mode %d", got)
 	}
 }
+
+func TestAGunnerHasNoSpeedBar(test *testing.T) {
+	state := &game.Game{}
+	state.Settings.MinSpeed, state.Settings.MaxSpeed = -10, 50
+	var flying, seated draw2d.List
+	PaintSpeed(&flying, FullScreen, state)
+	state.Round = &game.Round{Seat: &protocol.Seat{}}
+	PaintSpeed(&seated, FullScreen, state)
+	if len(flying.Commands) == 0 || len(seated.Commands) != 0 {
+		test.Errorf("a pilot's bar drew %d commands and a gunner's %d, want some and none", len(flying.Commands), len(seated.Commands))
+	}
+}

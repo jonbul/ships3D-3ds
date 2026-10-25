@@ -166,6 +166,9 @@ func paintSweep(drawing *draw2d.List, centreX, centreY, radius float32, now floa
 // PaintSpeed draws our speed as a bar up area's right edge: empty at the slowest reverse, full
 // at the fastest, with a mark where the ship stands still.
 func PaintSpeed(drawing *draw2d.List, area draw2d.Rectangle, state *game.Game) {
+	if state.Round != nil && state.Round.Seat != nil {
+		return // a gunner sits in a turret, which has no speed
+	}
 	speed, slowest, fastest := state.Own.Speed, state.Settings.MinSpeed, state.Settings.MaxSpeed
 	if fastest <= slowest {
 		return
