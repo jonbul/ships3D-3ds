@@ -15,9 +15,13 @@ jobs:
       with:
         go-version-file: go.mod
 
-    # The game, protocol and network packages are plain Go and are tested here.
-    # The console's program (cmd/ships3ds) needs TinyGo for the 3DS and is left
-    # out by its build tag.
+    - name: OpenGL's, X11's, Wayland's and ALSA's headers, which the desktop game builds against
+      run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev libasound2-dev
+
+    # The game, protocol and network packages are plain Go and are tested here, and the desktop
+    # game (engine/) is built.
+    # The 3DS build needs TinyGo for the 3DS (release.yml); engine/ is checked here as the
+    # desktop game.
     - name: Format
       run: test -z "$(gofmt -l .)"
 

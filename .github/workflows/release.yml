@@ -1,0 +1,91 @@
+# Builds the game for every platform when a version is tagged (v0.1.0, …), and puts the programs
+# on the tag's release: the desktop game (engine/) for Linux, Windows and macOS, and for the
+# Nintendo 3DS.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  desktop:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            program: ships3d-linux
+          - os: windows-latest
+            program: ships3d-windows.exe
+          - os: macos-latest
+            program: ships3d-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: OpenGL's, X11's, Wayland's and ALSA's headers (Linux)
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev libasound2-dev
+
+    # -tags release leaves the editor out: a finished game.
+    - name: Build
+      run: go build -tags release -o ${{ matrix.program }} ./engine
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.program }}
+        path: ${{ matrix.program }}
+
+  nintendo3ds:
+    runs-on: ubuntu-latest
+    # devkitPro's image has devkitARM and the 3DS's libraries (libctru, citro3d, the portlibs'
+    # mbedtls); its package server refuses downloads from CI, so nothing is installed on top.
+    container: devkitpro/devkitarm
+    env:
+      TINYGO_3DS: 0.42.0-3ds.1
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: The 3DS's libraries are there
+      run: ls /opt/devkitpro/libctru/lib/libctru.a /opt/devkitpro/libctru/lib/libcitro3d.a /opt/devkitpro/portlibs/3ds/lib/libmbedtls.a
+
+    - name: TinyGo for the 3DS
+      run: |
+        curl -fsSL -o tinygo.tar.gz "https://github.com/akrck02/tinygo-3ds/releases/download/v${TINYGO_3DS}/tinygo${TINYGO_3DS}.linux-amd64.tar.gz"
+        tar -xzf tinygo.tar.gz
+        echo "$PWD/tinygo/bin" >> "$GITHUB_PATH"
+
+    # runtime.heapMegabytes leaves C its share of the console's memory, for the socket service.
+    - name: Build
+      run: |
+        # The container's git doesn't trust a checkout another user owns, and Go stamps builds with it.
+        git config --global --add safe.directory "$PWD"
+        tinygo build -target=nintendo3ds -ldflags "-X runtime.heapMegabytes=64" -o ships3d.3dsx ./engine
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nintendo3ds
+        path: ships3d.3dsx
+
+  release:
+    needs: [desktop, nintendo3ds]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+
+    - name: Put the programs on the release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --generate-notes ships3d-linux ships3d-windows.exe ships3d-macos ships3d.3dsx

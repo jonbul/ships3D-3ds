@@ -1,0 +1,25 @@
+{
+	"name": "Ships 3D",
+	"startScene": "scenes/title.scene.json",
+	"keepStart": true,
+	"actions": {
+		"fire": {"desktop": ["Space", "Pad A"], "nintendo3ds": ["R", "A"]},
+		"menu": {"desktop": ["Tab", "P", "Pad Start"], "nintendo3ds": ["Start"]},
+		"confirm": {"desktop": ["Enter", "Space", "Pad A"], "nintendo3ds": ["A"]},
+		"back": {"desktop": ["Escape", "Pad B"], "nintendo3ds": ["B"]},
+		"up": {"desktop": ["Up", "Pad Up"], "nintendo3ds": ["Up"]},
+		"down": {"desktop": ["Down", "Pad Down"], "nintendo3ds": ["Down"]},
+		"left": {"desktop": ["Left", "Pad Left"], "nintendo3ds": ["Left"]},
+		"right": {"desktop": ["Right", "Pad Right"], "nintendo3ds": ["Right"]},
+		"previous page": {"desktop": ["Q", "Pad Left Shoulder"], "nintendo3ds": ["L"]},
+		"next page": {"desktop": ["E", "Pad Right Shoulder"], "nintendo3ds": ["R"]},
+		"zoom in": {"desktop": ["Plus", "Pad Up"], "nintendo3ds": ["Up"]},
+		"zoom out": {"desktop": ["Minus", "Pad Down"], "nintendo3ds": ["Down"]},
+		"centre tilt": {"nintendo3ds": ["L"]},
+		"pitch": {"desktop": ["Down-", "Up+"]},
+		"yaw": {"desktop": ["Left-", "Right+"]},
+		"roll": {"desktop": ["A-", "D+"], "nintendo3ds": ["Left-", "Right+", "Right Stick X"]},
+		"throttle": {"desktop": ["S-", "W+"], "nintendo3ds": ["ZL-", "ZR+", "B-", "X+", "Right Stick Y"]}
+	},
+	"axes": ["pitch", "yaw", "roll", "throttle"]
+}

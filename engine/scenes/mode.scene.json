@@ -1,0 +1,53 @@
+{
+	"name": "Mode",
+	"sky": "#02030a",
+	"nodes": [
+		{
+			"name": "Camera",
+			"position": [
+				0,
+				4,
+				-12
+			],
+			"rotation": [
+				0,
+				180,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			],
+			"camera": {
+				"projection": "perspective",
+				"fieldOfView": 58,
+				"main": true
+			}
+		},
+		{
+			"name": "Modes",
+			"position": [
+				0,
+				0,
+				0
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			],
+			"behaviours": [
+				{
+					"name": "Modes",
+					"fields": {}
+				}
+			]
+		}
+	]
+}
