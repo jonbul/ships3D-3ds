@@ -5,6 +5,8 @@ import (
 	"math"
 	"testing"
 
+	"github.com/akrck02/go-renderer/scene"
+
 	"github.com/jonbul/ships3D-3ds/flight"
 	"github.com/jonbul/ships3D-3ds/protocol"
 )
@@ -161,5 +163,34 @@ func TestTheBrowsersNewFieldsAreRead(t *testing.T) {
 	}
 	if part.Intensity != 2 || part.Opacity != 0.5 || part.Texture != "carbon" || part.TextureURL == "" || part.ModelId != "m1" {
 		t.Fatalf("read %+v", part)
+	}
+}
+
+func TestALightIsABulbGlowingInItsColourMirroredLikeAnyPart(t *testing.T) {
+	light := protocol.Part{Type: partLight, Position: flight.Vector{2, 0, 0}, Scale: flight.Vector{0.4, 0.4, 0.4}, Color: "#ff0000", Intensity: 2, Mirror: true}
+	layers := []protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false), light}}}
+	model := BuildModel(layers, Fine)
+	if model.Glow == nil || model.Glow.Material.Kind != scene.UnlitKind {
+		t.Fatal("the light made no glowing mesh")
+	}
+	sphere := len(primitive(partSphere, Fine))
+	if got := len(model.Glow.Positions) / 9; got != 2*sphere {
+		t.Errorf("the bulbs have %d triangles, want two spheres of %d", got, sphere)
+	}
+	if model.Glow.Colors[0] != 1 || model.Glow.Colors[1] != 0 {
+		t.Errorf("the bulb's colour is %v, want red", model.Glow.Colors[:3])
+	}
+	box := Build([]protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}, Fine)
+	if got, want := len(model.Body.Positions), len(box.Positions); got != want {
+		t.Errorf("the body has %d positions, want only the box's %d", got, want)
+	}
+	if got, want := Triangles(layers, Fine), len(box.Positions)/9+2*sphere; got != want {
+		t.Errorf("Triangles counts %d, want the box's and the bulbs' %d", got, want)
+	}
+}
+
+func TestADesignWithoutLightsHasNoGlow(t *testing.T) {
+	if model := BuildModel([]protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}, Fine); model.Glow != nil {
+		t.Fatal("a design without lights made a glowing mesh")
 	}
 }

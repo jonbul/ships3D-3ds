@@ -108,20 +108,20 @@ func (choice *Ships) Update(context *engine.Context) {
 // show puts the hangar and the chosen ship where this platform shows them.
 func (choice *Ships) show(context *engine.Context) {
 	offered := choice.ships[choice.index]
-	mesh := choice.world.ShipMesh(offered.Id, offered.Layers, false)
+	model := choice.world.ShipModel(offered.Id, offered.Layers, false)
 	radius := ship.Radius(offered.Layers)
 	if choice.below != nil {
 		var view camera.Lens
 		choice.world.ShowTitle(context.Time, &view)
 		choice.world.HideTitle() // the ship turns on the touch screen; the top shows its name
 		look(context, view)
-		choice.below.show(mesh, radius, context.Time)
+		choice.below.show(model, radius, context.Time)
 		return
 	}
 	choice.hangar.Show(context.Time)
 	choice.world.HideTitle()
 	look(context, arena.HangarCamera)
-	turnShip(choice.turning, mesh, radius, context.Time)
+	turnShip(choice.turning, model, radius, context.Time)
 }
 
 // paintTouchScreen draws the arrows over the hangar, or the menu over it when it is open.

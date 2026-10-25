@@ -13,13 +13,43 @@ import (
 // shipMaterial lights every ship like the sun lights the island: the browser's flat shading.
 var shipMaterial = &scene.Material{Name: "ship", Kind: scene.LitKind, BaseColor: [4]float32{1, 1, 1, 1}, DoubleSided: true}
 
+// glowMaterial makes a light's bulb shine with its own colour, unshaded, as the browser draws it:
+// go-renderer's GlowKind would only shine in the dark, and be shaded by the sun in space.
+var glowMaterial = &scene.Material{Name: "ship light", Kind: scene.UnlitKind, BaseColor: [4]float32{1, 1, 1, 1}}
+
+// partLight is the browser's light: a bulb, drawn as a sphere sized by its scale.
+const partLight = "light"
+
+// Model is a design's meshes: its body, and its lights' bulbs (nil when it has none). Each has
+// its own material, so a node shows the body and a child of it the bulbs.
+type Model struct {
+	Body, Glow *scene.Mesh
+}
+
+// BuildModel makes a design's meshes at a detail, in the design's own units.
+func BuildModel(layers []protocol.Layer, detail Detail) Model {
+	model := Model{Body: Build(layers, detail)}
+	if glow := build(layers, detail, "ship lights", glowMaterial, isLight); len(glow.Positions) > 0 {
+		model.Glow = glow
+	}
+	return model
+}
+
 // Build makes one mesh of a ship's visible parts at a detail, in the design's own units: the
-// caller scales it to the game's ship size. Parts of a type it doesn't know are left out.
+// caller scales it to the game's ship size. Lights are left out (BuildModel has them), and so are
+// parts of a type it doesn't know.
 func Build(layers []protocol.Layer, detail Detail) *scene.Mesh {
-	mesh := &scene.Mesh{Name: "ship", Material: shipMaterial}
+	return build(layers, detail, "ship", shipMaterial, func(part protocol.Part) bool { return !isLight(part) })
+}
+
+func isLight(part protocol.Part) bool { return part.Type == partLight }
+
+// build makes one mesh, in material, of the visible parts kept.
+func build(layers []protocol.Layer, detail Detail, name string, material *scene.Material, kept func(protocol.Part) bool) *scene.Mesh {
+	mesh := &scene.Mesh{Name: name, Material: material}
 	// Made to measure: growing them by appending would hold up to twice the memory for a moment,
 	// which a design of hundreds of parts can't spare on the console.
-	vertices := 3 * Triangles(layers, detail)
+	vertices := 3 * triangles(layers, detail, kept)
 	mesh.Positions = make([]float32, 0, 3*vertices)
 	mesh.Normals = make([]float32, 0, 3*vertices)
 	mesh.Colors = make([]float32, 0, 4*vertices)
@@ -28,6 +58,9 @@ func Build(layers []protocol.Layer, detail Detail) *scene.Mesh {
 			continue
 		}
 		for _, part := range layer.Parts {
+			if !kept(part) {
+				continue
+			}
 			addPart(mesh, part, detail, part.Position, part.Rotation)
 			if part.Mirror {
 				// The browser's mirror: across X = 0, which turns the other way about Y and Z.
@@ -39,15 +72,30 @@ func Build(layers []protocol.Layer, detail Detail) *scene.Mesh {
 	return mesh
 }
 
-// Triangles is how many triangles Build makes of a design at a detail.
+// shape is the primitive a part is drawn with: its own type, or a sphere for a light's bulb.
+func shape(part protocol.Part) string {
+	if isLight(part) {
+		return partSphere
+	}
+	return part.Type
+}
+
+// Triangles is how many triangles BuildModel makes of a design at a detail.
 func Triangles(layers []protocol.Layer, detail Detail) int {
+	return triangles(layers, detail, func(protocol.Part) bool { return true })
+}
+
+func triangles(layers []protocol.Layer, detail Detail, kept func(protocol.Part) bool) int {
 	count := 0
 	for _, layer := range layers {
 		if !layer.Visible {
 			continue
 		}
 		for _, part := range layer.Parts {
-			triangles := len(primitive(part.Type, detail))
+			if !kept(part) {
+				continue
+			}
+			triangles := len(primitive(shape(part), detail))
 			if part.Mirror {
 				triangles *= 2
 			}
@@ -72,7 +120,7 @@ func Within(layers []protocol.Layer, maximum int) Detail {
 func addPart(mesh *scene.Mesh, part protocol.Part, detail Detail, position, rotation flight.Vector) {
 	turn := flight.FromEulerXYZ(rotation[0], rotation[1], rotation[2])
 	colour := linearColour(part.Color)
-	for _, corners := range primitive(part.Type, detail) {
+	for _, corners := range primitive(shape(part), detail) {
 		var placed triangle
 		for index, corner := range corners {
 			scaled := flight.Vector{corner[0] * part.Scale[0], corner[1] * part.Scale[1], corner[2] * part.Scale[2]}

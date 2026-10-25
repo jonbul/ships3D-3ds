@@ -41,7 +41,7 @@ func (world *World) showMothership(state *game.Game) {
 		return
 	}
 	design := round.Mothership
-	world.mothership.Mesh = world.ShipMesh(design.Ship.Id, design.Ship.Layers, false)
+	Wear(world.mothership, world.ShipModel(design.Ship.Id, design.Ship.Layers, false))
 	world.mothership.Transform = TransformOf(flight.Vector{}, flight.NoRotation, design.Scale)
 }
 

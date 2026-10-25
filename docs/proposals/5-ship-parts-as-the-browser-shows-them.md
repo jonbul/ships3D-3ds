@@ -33,7 +33,8 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 - `protocol.Part` learns the new fields: `texture`, `textureUrl`, `opacity`, `intensity`,
   `modelId`.
 - In `ship`:
-  - a light is a small sphere with go-renderer's `GlowKind` material, and an `Additive` halo;
+  - a light is a sphere in an unlit material, a child node of the ship's (go-renderer's `GlowKind`
+    is shaded by the sun, and shines only in the dark);
   - opacity is a `Transparent` material with that alpha;
   - a texture is an image once go-renderer has them (R5); until then a part shows its colour.
   - Parts are grouped by material, so a ship is still a few meshes and draws.
@@ -50,7 +51,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 ## Tasks
 
 - [x] T1 — The new fields in `protocol.Part`; unknown types left out · protocol/, ship/ · R6
-- [ ] T2 — Lights as glowing bulbs · ship/ · R1
+- [x] T2 — Lights as glowing bulbs · ship/ · R1
 - [ ] T3 — Opacity · ship/ · R2
 - [ ] T4 — `.glb` parts: fetch, cache, fit · ship/, account/ · R3
 - [ ] T5 — Real lights, per platform, measured · engine/, arena/ · R4

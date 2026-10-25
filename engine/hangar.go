@@ -8,6 +8,7 @@ import (
 
 	"github.com/jonbul/ships3D-3ds/arena"
 	"github.com/jonbul/ships3D-3ds/flight"
+	"github.com/jonbul/ships3D-3ds/ship"
 )
 
 // The hangar's turning ship: how big it shows, in metres, and how fast it turns, in turns a
@@ -38,26 +39,26 @@ func openHangarScreen() *hangarScreen {
 }
 
 // show lights the hangar as space is, with its far dark behind, and turns the ship at now
-// seconds; with no mesh (a ship the server hasn't described) only the hangar.
-func (shown *hangarScreen) show(mesh *scene.Mesh, radius, now float64) {
+// seconds; with no model (a ship the server hasn't described) only the hangar.
+func (shown *hangarScreen) show(model ship.Model, radius, now float64) {
 	environment := &shown.scene.World().Environment
 	arena.LightSpace(environment)
 	environment.SkyHorizon, environment.FogColor = arena.HangarBack, arena.HangarBack
 	shown.hangar.Show(now)
-	turnShip(shown.ship, mesh, radius, now)
+	turnShip(shown.ship, model, radius, now)
 	if shown.camera != nil {
 		aim(shown.camera, arena.HangarCamera)
 	}
 }
 
 // turnShip puts a ship on the hangar's platform, turning at now seconds, as big as the hangar
-// shows ships; with no mesh, or no size, it hides it.
-func turnShip(node *scene.Node, mesh *scene.Mesh, radius, now float64) {
-	node.Hidden = mesh == nil || radius <= 0
+// shows ships; with no body, or no size, it hides it.
+func turnShip(node *scene.Node, model ship.Model, radius, now float64) {
+	node.Hidden = model.Body == nil || radius <= 0
 	if node.Hidden {
 		return
 	}
-	node.Mesh = mesh
+	arena.Wear(node, model)
 	turn := flight.FromEulerXYZ(0, now*hangarTurnsASecond*2*math.Pi, 0)
 	node.Transform = arena.TransformOf(arena.HangarShipPlace, turn, hangarShipRadius/radius)
 }

@@ -42,7 +42,7 @@ type World struct {
 	scene                  *scene.Scene
 	own                    *scene.Node
 	ownShip                string
-	ships                  map[meshKey]*scene.Mesh // built once per design and detail
+	ships                  map[meshKey]ship.Model // built once per design and detail
 	ownBullet, otherBullet *scene.Mesh
 	camera                 chase.Camera
 	wasAlive               bool
@@ -90,7 +90,7 @@ func NewWorld() *World { return NewWorldIn(scene.New()) }
 // nodes are added to the scene's, and its light set.
 func NewWorldIn(space *scene.Scene) *World {
 	LightSpace(&space.Environment)
-	world := &World{scene: space, ships: map[meshKey]*scene.Mesh{}, remotes: map[string]*scene.Node{}}
+	world := &World{scene: space, ships: map[meshKey]ship.Model{}, remotes: map[string]*scene.Node{}}
 	world.sky = skyNode()
 	world.edge = &scene.Node{Name: "world edge", Transform: graphics.Identity(), Hidden: true}
 	world.crash = newCrash(space)
@@ -137,7 +137,7 @@ func (world *World) Show(state *game.Game, events []game.Event, view *camera.Len
 	scale := state.Player.Scale
 	if world.ownShip != state.Player.Ship.Id {
 		world.ownShip = state.Player.Ship.Id
-		world.own.Mesh = world.ShipMesh(state.Player.Ship.Id, state.Player.Ship.Layers, false)
+		Wear(world.own, world.ShipModel(state.Player.Ship.Id, state.Player.Ship.Layers, false))
 	}
 	world.own.Hidden = !state.Alive || state.Round != nil && state.Round.Seat != nil // a gunner looks out of the turret
 	world.own.Transform = TransformOf(state.Own.Position, state.Own.Rotation, scale)
@@ -197,19 +197,30 @@ const (
 	farTriangles  = 2500
 )
 
-// shipMesh is a design's mesh near or far, built the first time it is asked for.
-func (world *World) ShipMesh(id string, layers []protocol.Layer, far bool) *scene.Mesh {
+// ShipModel is a design's meshes near or far, built the first time they are asked for.
+func (world *World) ShipModel(id string, layers []protocol.Layer, far bool) ship.Model {
 	key := meshKey{id, far}
-	if mesh, found := world.ships[key]; found {
-		return mesh
+	if model, found := world.ships[key]; found {
+		return model
 	}
 	budget := nearTriangles
 	if far {
 		budget = farTriangles
 	}
-	mesh := ship.Build(layers, ship.Within(layers, budget))
-	world.ships[key] = mesh
-	return mesh
+	model := ship.BuildModel(layers, ship.Within(layers, budget))
+	world.ships[key] = model
+	return model
+}
+
+// Wear shows a design's model on a ship's node: the body on the node, and the lights' bulbs on
+// a child of it, which follows it and is hidden when the design has no lights.
+func Wear(node *scene.Node, model ship.Model) {
+	node.Mesh = model.Body
+	if len(node.Children) == 0 {
+		node.Children = []*scene.Node{{Name: "lights", Moving: node.Moving}}
+	}
+	bulbs := node.Children[0]
+	bulbs.Mesh, bulbs.Hidden = model.Glow, model.Glow == nil
 }
 
 // Where ships turn coarse, and where they are too far to draw at all, in world units.
@@ -243,11 +254,11 @@ func (world *World) showRemotes(state *game.Game) {
 		distance := player.Shown.Position.Subtract(state.Own.Position).Length()
 		node.Hidden = false
 		if player.Player.Seat != nil {
-			node.Mesh = world.turret
+			Wear(node, ship.Model{Body: world.turret})
 			node.Transform = TransformOf(player.Shown.Position, player.Shown.Rotation, turretShare*state.Settings.ShipRadius)
 			continue
 		}
-		node.Mesh = world.ShipMesh(player.Player.Ship.Id, player.Player.Ship.Layers, distance > coarseDistance)
+		Wear(node, world.ShipModel(player.Player.Ship.Id, player.Player.Ship.Layers, distance > coarseDistance))
 		node.Transform = TransformOf(player.Shown.Position, player.Shown.Rotation, player.Player.Scale)
 	}
 }
