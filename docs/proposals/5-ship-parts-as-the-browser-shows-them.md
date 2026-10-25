@@ -35,7 +35,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 - In `ship`:
   - a light is a sphere in an unlit material, a child node of the ship's (go-renderer's `GlowKind`
     is shaded by the sun, and shines only in the dark);
-  - opacity is a `Transparent` material with that alpha;
+  - opacity is a `Transparent` material with that alpha, one mesh for each twentieth of opacity;
   - a texture is an image once go-renderer has them (R5); until then a part shows its colour.
   - Parts are grouped by material, so a ship is still a few meshes and draws.
 - **Real light (R4).** go-engine's point lights follow their node.
@@ -52,7 +52,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 
 - [x] T1 — The new fields in `protocol.Part`; unknown types left out · protocol/, ship/ · R6
 - [x] T2 — Lights as glowing bulbs · ship/ · R1
-- [ ] T3 — Opacity · ship/ · R2
+- [x] T3 — Opacity · ship/ · R2
 - [ ] T4 — `.glb` parts: fetch, cache, fit · ship/, account/ · R3
 - [ ] T5 — Real lights, per platform, measured · engine/, arena/ · R4
 - [ ] T6 — Image textures and `textureUrl`, once go-renderer has them · ship/ · R5

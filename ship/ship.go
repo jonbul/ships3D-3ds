@@ -2,6 +2,7 @@ package ship
 
 import (
 	"math"
+	"slices"
 	"strconv"
 
 	"github.com/akrck02/go-renderer/scene"
@@ -20,26 +21,75 @@ var glowMaterial = &scene.Material{Name: "ship light", Kind: scene.UnlitKind, Ba
 // partLight is the browser's light: a bulb, drawn as a sphere sized by its scale.
 const partLight = "light"
 
-// Model is a design's meshes: its body, and its lights' bulbs (nil when it has none). Each has
-// its own material, so a node shows the body and a child of it the bulbs.
+// Model is a design's meshes: its opaque body, and the parts in other materials: its lights'
+// bulbs, and its see-through parts, one mesh for each opacity. A node shows the body, and
+// children of it the others.
 type Model struct {
-	Body, Glow *scene.Mesh
+	Body   *scene.Mesh
+	Others []*scene.Mesh
 }
 
 // BuildModel makes a design's meshes at a detail, in the design's own units.
 func BuildModel(layers []protocol.Layer, detail Detail) Model {
 	model := Model{Body: Build(layers, detail)}
 	if glow := build(layers, detail, "ship lights", glowMaterial, isLight); len(glow.Positions) > 0 {
-		model.Glow = glow
+		model.Others = append(model.Others, glow)
+	}
+	for _, step := range opacitySteps(layers) {
+		sameOpacity := func(part protocol.Part) bool { return !isLight(part) && opacityStep(part) == step }
+		model.Others = append(model.Others, build(layers, detail, "see-through ship", seeThrough(step), sameOpacity))
 	}
 	return model
 }
 
+// opacityStepsInAll is how finely opacities are told apart: parts whose opacities round to the
+// same twentieth share a mesh, so a ship stays a few draws.
+const opacityStepsInAll = 20
+
+// opacityStep is a part's opacity in twentieths: opacityStepsInAll for an opaque part.
+func opacityStep(part protocol.Part) int {
+	if part.Opacity <= 0 || part.Opacity >= 1 {
+		return opacityStepsInAll
+	}
+	return max(1, int(math.Round(part.Opacity*opacityStepsInAll)))
+}
+
+// opacitySteps are the see-through opacities a design's visible parts have, in the order met.
+func opacitySteps(layers []protocol.Layer) []int {
+	var steps []int
+	for _, layer := range layers {
+		if !layer.Visible {
+			continue
+		}
+		for _, part := range layer.Parts {
+			if step := opacityStep(part); step < opacityStepsInAll && !isLight(part) && !slices.Contains(steps, step) {
+				steps = append(steps, step)
+			}
+		}
+	}
+	return steps
+}
+
+// seeThroughMaterials are the see-through materials, one for each opacity step, made once.
+var seeThroughMaterials = map[int]*scene.Material{}
+
+// seeThrough is the ship's material, blended at an opacity step.
+func seeThrough(step int) *scene.Material {
+	if material, found := seeThroughMaterials[step]; found {
+		return material
+	}
+	alpha := float32(step) / opacityStepsInAll
+	material := &scene.Material{Name: "see-through ship", Kind: scene.LitKind, BaseColor: [4]float32{1, 1, 1, alpha}, DoubleSided: true, Transparent: true}
+	seeThroughMaterials[step] = material
+	return material
+}
+
 // Build makes one mesh of a ship's visible parts at a detail, in the design's own units: the
-// caller scales it to the game's ship size. Lights are left out (BuildModel has them), and so are
-// parts of a type it doesn't know.
+// caller scales it to the game's ship size. Lights and see-through parts are left out
+// (BuildModel has them), and so are parts of a type it doesn't know.
 func Build(layers []protocol.Layer, detail Detail) *scene.Mesh {
-	return build(layers, detail, "ship", shipMaterial, func(part protocol.Part) bool { return !isLight(part) })
+	opaque := func(part protocol.Part) bool { return !isLight(part) && opacityStep(part) == opacityStepsInAll }
+	return build(layers, detail, "ship", shipMaterial, opaque)
 }
 
 func isLight(part protocol.Part) bool { return part.Type == partLight }

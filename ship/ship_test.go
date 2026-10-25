@@ -170,15 +170,16 @@ func TestALightIsABulbGlowingInItsColourMirroredLikeAnyPart(t *testing.T) {
 	light := protocol.Part{Type: partLight, Position: flight.Vector{2, 0, 0}, Scale: flight.Vector{0.4, 0.4, 0.4}, Color: "#ff0000", Intensity: 2, Mirror: true}
 	layers := []protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false), light}}}
 	model := BuildModel(layers, Fine)
-	if model.Glow == nil || model.Glow.Material.Kind != scene.UnlitKind {
+	if len(model.Others) != 1 || model.Others[0].Material.Kind != scene.UnlitKind {
 		t.Fatal("the light made no glowing mesh")
 	}
+	glow := model.Others[0]
 	sphere := len(primitive(partSphere, Fine))
-	if got := len(model.Glow.Positions) / 9; got != 2*sphere {
+	if got := len(glow.Positions) / 9; got != 2*sphere {
 		t.Errorf("the bulbs have %d triangles, want two spheres of %d", got, sphere)
 	}
-	if model.Glow.Colors[0] != 1 || model.Glow.Colors[1] != 0 {
-		t.Errorf("the bulb's colour is %v, want red", model.Glow.Colors[:3])
+	if glow.Colors[0] != 1 || glow.Colors[1] != 0 {
+		t.Errorf("the bulb's colour is %v, want red", glow.Colors[:3])
 	}
 	box := Build([]protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}, Fine)
 	if got, want := len(model.Body.Positions), len(box.Positions); got != want {
@@ -189,8 +190,31 @@ func TestALightIsABulbGlowingInItsColourMirroredLikeAnyPart(t *testing.T) {
 	}
 }
 
-func TestADesignWithoutLightsHasNoGlow(t *testing.T) {
-	if model := BuildModel([]protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}, Fine); model.Glow != nil {
-		t.Fatal("a design without lights made a glowing mesh")
+func TestAnOpaqueDesignWithoutLightsIsOneMesh(t *testing.T) {
+	if model := BuildModel([]protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false)}}}, Fine); len(model.Others) != 0 {
+		t.Fatalf("a plain design made %d meshes besides its body", len(model.Others))
+	}
+}
+
+func TestASeeThroughPartIsBlendedAtItsOpacity(t *testing.T) {
+	glass, frosted, alsoGlass := boxPart(flight.Vector{3, 0, 0}, false), boxPart(flight.Vector{-3, 0, 0}, false), boxPart(flight.Vector{0, 3, 0}, false)
+	glass.Opacity, frosted.Opacity, alsoGlass.Opacity = 0.3, 0.7, 0.31
+	layers := []protocol.Layer{{Visible: true, Parts: []protocol.Part{boxPart(flight.Vector{}, false), glass, frosted, alsoGlass}}}
+	model := BuildModel(layers, Fine)
+	box := len(primitive(partBox, Fine))
+	if len(model.Body.Positions)/9 != box {
+		t.Fatalf("the body has %d triangles, want only the opaque box's %d", len(model.Body.Positions)/9, box)
+	}
+	if len(model.Others) != 2 {
+		t.Fatalf("%d see-through meshes, want one for 0.3 (with 0.31) and one for 0.7", len(model.Others))
+	}
+	for index, want := range []struct {
+		alpha     float32
+		triangles int
+	}{{0.3, 2 * box}, {0.7, box}} {
+		mesh := model.Others[index]
+		if !mesh.Material.Transparent || math.Abs(float64(mesh.Material.BaseColor[3]-want.alpha)) > 1e-6 || len(mesh.Positions)/9 != want.triangles {
+			t.Errorf("mesh %d: transparent %v, alpha %v, %d triangles; want alpha %v and %d", index, mesh.Material.Transparent, mesh.Material.BaseColor[3], len(mesh.Positions)/9, want.alpha, want.triangles)
+		}
 	}
 }

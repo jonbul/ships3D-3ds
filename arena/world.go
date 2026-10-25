@@ -212,15 +212,19 @@ func (world *World) ShipModel(id string, layers []protocol.Layer, far bool) ship
 	return model
 }
 
-// Wear shows a design's model on a ship's node: the body on the node, and the lights' bulbs on
-// a child of it, which follows it and is hidden when the design has no lights.
+// Wear shows a design's model on a ship's node: the body on the node, and its other meshes on
+// children of it, which follow it. Children are kept for the next design, hidden when unused.
 func Wear(node *scene.Node, model ship.Model) {
 	node.Mesh = model.Body
-	if len(node.Children) == 0 {
-		node.Children = []*scene.Node{{Name: "lights", Moving: node.Moving}}
+	for len(node.Children) < len(model.Others) {
+		node.Children = append(node.Children, &scene.Node{Name: "ship part", Moving: node.Moving})
 	}
-	bulbs := node.Children[0]
-	bulbs.Mesh, bulbs.Hidden = model.Glow, model.Glow == nil
+	for index, child := range node.Children {
+		child.Hidden = index >= len(model.Others)
+		if !child.Hidden {
+			child.Mesh = model.Others[index]
+		}
+	}
 }
 
 // Where ships turn coarse, and where they are too far to draw at all, in world units.
