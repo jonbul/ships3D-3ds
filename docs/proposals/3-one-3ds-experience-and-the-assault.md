@@ -109,8 +109,8 @@ models (go-renderer's glTF loader, fetched from the server once and kept).
   Played on the desktop against three bots: the lobby lists who waits and counts down, the round
   opens with our role, and the HUD shows the mothership's life and the time left (a gunner has no
   life bar). The result screen is tested but not yet seen in play: a round lasts five minutes.
-- [ ] T12 — Textures, opacity and lights on parts · ship/ · R7 · tests per kind of part
-- [ ] T13 — `.glb` parts · ship/ · R7 · test: a design with a model part makes its mesh
+- [~] T12 — Textures, opacity and lights on parts · moved to proposal 5
+- [~] T13 — `.glb` parts · moved to proposal 5
 - [ ] T14 — 60 fps in an assault with 20 players on a New 3DS · R9 · STATS — rehearsed in Azahar with 19 bots: 57–60 fps while they hold fire, 40–45 while they fire (about 30 shots a second). Neither drawing the bullets, nor the radar, nor reading the shots with encoding/json is the cost; silencing the others' shots brings the slowest frame from 41 to 29 ms, and hearing only one every 0.15 s does not, so it may be Azahar emulating the DSP. To be read on the console
 
 ## Result
