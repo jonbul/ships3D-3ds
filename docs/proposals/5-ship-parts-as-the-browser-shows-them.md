@@ -57,7 +57,7 @@ browser, as far as each platform can. This takes over proposal 3's T12 and T13.
 - [x] T2 — Lights as glowing bulbs · ship/ · R1
 - [x] T3 — Opacity · ship/ · R2
 - [x] T4 — `.glb` parts: fetch, cache, fit · ship/, account/, engine/ · R3 — kept in memory only: not yet on the SD card
-- [x] T5 — Real lights, per platform, measured · engine/, arena/ · R4 — go-engine pinned to its `feature/program-lights` until it is on main
+- [x] T5 — Real lights, per platform, measured · engine/, arena/ · R4
 - [ ] T6 — Image textures and `textureUrl`, once go-renderer has them · ship/ · R5
 
 ## Result
